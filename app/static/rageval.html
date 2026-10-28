@@ -342,6 +342,7 @@
         ["Evaluation set", (m.n_samples ?? "—") + " questions"],
         ["Knowledge base", (m.kb_chunks ?? "—") + " chunks"],
         ["Embedding / rerank", (m.embed_model || "Not recorded") + " · " + (m.rerank_model || "Not recorded")],
+        ["Generation model", d.generation_done ? (m.chat_model || "Not recorded") : "Not available"],
         ["Judge model", m.judge_model || "Not recorded"],
         ["Last run", fmtTime(m.generated_at)],
       ];

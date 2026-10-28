@@ -1,0 +1,16 @@
+const fs = require('node:fs'), vm = require('node:vm'), assert = require('node:assert/strict');
+const source = fs.readFileSync('app/static/rageval.html', 'utf8');
+const el = (tag, cls, text) => ({tag, text: text ?? '', children: [], appendChild(child) { this.children.push(child); }});
+const context = {el, fmtTime: value => value || '—'};
+vm.createContext(context);
+vm.runInContext(source.slice(source.indexOf('function metaBar('), source.indexOf('function retrievalPanel(')), context);
+const flatten = node => [node.text, ...node.children.map(flatten)].join(' ');
+const meta = {n_samples: 1, kb_chunks: 2, chat_model: 'generation-model', judge_model: 'judge-model'};
+let text = flatten(context.metaBar({meta, generation_done: true}));
+assert(text.includes('Generation model generation-model'));
+assert(text.includes('Judge model judge-model'));
+text = flatten(context.metaBar({meta, generation_done: false}));
+assert(text.includes('Generation model Not available'));
+text = flatten(context.metaBar({meta: {...meta, chat_model: null}, generation_done: true}));
+assert(text.includes('Generation model Not recorded'));
+console.log('RAG model metadata: generation and judge models display independently.');

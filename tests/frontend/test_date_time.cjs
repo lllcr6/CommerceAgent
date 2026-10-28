@@ -1,0 +1,18 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+process.env.TZ = 'America/Los_Angeles';
+const context = {window: {}, Date, Intl};
+vm.createContext(context);
+vm.runInContext(fs.readFileSync('app/static/date-time.js', 'utf8'), context);
+const format = context.window.formatDateTime;
+assert.equal(format('2026-10-28T10:25:30.123456'), 'Oct 28, 2026, 10:25 AM');
+assert.equal(format('2026-10-28 10:25:30'), 'Oct 28, 2026, 10:25 AM');
+assert.equal(format('2026-10-28'), 'Oct 28, 2026');
+assert.equal(format('2026-10-28T17:25:30Z'), 'Oct 28, 2026, 10:25 AM');
+assert.equal(format('2026-10-28T19:25:30+02:00'), 'Oct 28, 2026, 10:25 AM');
+assert.equal(format('2026-10-28T00:30:00Z'), 'Oct 27, 2026, 5:30 PM');
+assert.equal(format(null), '—');
+assert.equal(format('not a date'), '—');
+assert.equal(format('2026-02-30T10:00:00'), '—');
+console.log('Timestamps: local offsets, unzoned calendar times, date-only and invalid values passed.');

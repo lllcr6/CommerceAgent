@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Paw & Hearth · Support desk</title>
+<link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicon.ico">
+<link rel="icon" type="image/svg+xml" href="/static/paws.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="/static/apple-touch-icon.png">
+
+  <link rel="stylesheet" href="/static/support.css">
+<link rel="stylesheet" href="/static/pet-theme.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
+<body>
+  <div class="desk">
+    <aside id="sessions" class="sessions" aria-label="Support conversation">
+      <div class="brand"><span class="mascot" data-cat></span><div><strong>Paw & Hearth</strong><small>Support desk</small></div><button id="sessions-close" class="drawer-close" aria-label="Close conversations" type="button">✕</button></div>
+      <a class="ticket-entry" href="/tickets">Ticket queue <span id="pending-tickets">0</span> →</a>
+      <div class="session-tabs" role="tablist" aria-label="Conversations">
+        <button id="queue-tab" role="tab" aria-selected="true" aria-controls="queue" type="button">Queued <span id="queue-count">0</span></button>
+        <button id="mine-tab" role="tab" aria-selected="false" aria-controls="mine" type="button">My conversations <span id="mine-count">0</span></button>
+      </div>
+      <div class="session-lists"><div id="queue" role="tabpanel" aria-labelledby="queue-tab"></div><div id="mine" role="tabpanel" aria-labelledby="mine-tab" hidden></div></div>
+      <div class="account">
+        <div class="identity"><span class="account-avatar" id="account-avatar" aria-hidden="true">U</span><div><small>Current agent</small><strong id="identity">Loading</strong></div></div>
+        <button id="logout" type="button">Sign out</button>
+      </div>
+    </aside>
+    <main class="workspace">
+      <header class="chat-header">
+        <button class="btn" id="sessions-open" type="button" aria-controls="sessions" aria-expanded="false">☰ Conversation</button>
+        <div class="heading"><h1 id="title">Support team</h1><span id="conversation-meta">Select a conversation to begin</span></div>
+        <span class="badge active" id="service-state" hidden>Active conversation</span>
+        <span class="spacer"></span>
+        <button class="btn" id="business-open" type="button" aria-controls="business" aria-expanded="false" disabled>Orders / tickets</button>
+        <button class="btn end" id="close" type="button" hidden>End conversation</button>
+      </header>
+      <div class="chat-body">
+        <div id="history" aria-label="Messages" tabindex="0"><div class="empty-state" id="welcome"><span class="welcome-cat" data-cat></span><h2>Start a conversation</h2><p>Claim a waiting customer or continue a conversation.</p></div></div>
+        <footer id="reply-area" hidden><label class="sr-only" for="reply">Reply</label><div class="composer"><textarea id="reply" rows="2" placeholder="Reply to customer…" maxlength="8000"></textarea><button class="btn primary" id="send" type="button">Send</button></div><p class="reply-hint">Enter Send · Shift + Enter New line</p></footer>
+        <div id="closed-state" class="closed-state" hidden><strong>This support conversation is closed</strong><span id="rating">Awaiting customer feedback</span></div>
+      </div>
+    </main>
+    <aside id="business" class="business" aria-label="Customer details">
+      <div class="business-head"><h2>Customer details</h2><button class="drawer-close" id="business-close" type="button" aria-label="Close customer details">✕</button></div>
+      <div class="business-tabs" role="tablist" aria-label="Business type"><button id="orders-tab" role="tab" aria-controls="orders" aria-selected="true" type="button">Orders and tracking</button><button id="tickets-tab" role="tab" aria-controls="tickets" aria-selected="false" type="button">Ticket <span id="ticket-count">0</span></button></div>
+      <div class="business-content"><div id="orders" role="tabpanel" aria-labelledby="orders-tab"><p class="empty-note">Select a conversation to view customer orders</p></div><div id="tickets" role="tabpanel" aria-labelledby="tickets-tab" hidden><p class="empty-note">Select a conversation to view tickets</p></div></div>
+    </aside>
+  </div>
+  <button id="drawer-backdrop" type="button" aria-label="Close sidebar" tabindex="-1" hidden></button>
+  <div id="notice" role="status" hidden></div>
+  <script type="module" src="/static/support.js"></script>
+</body>
+</html>

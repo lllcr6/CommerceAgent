@@ -1,0 +1,582 @@
+{
+ "meta": {
+  "generated_at": "2026-10-22 12:06",
+  "strategy": "hybrid_rerank",
+  "dataset": "data/rag/evaluation/questions.jsonl",
+  "n_answerable": 106,
+  "n_absent": 15
+ },
+ "distribution": {
+  "answerable": {
+   "n": 106,
+   "min": 0.464,
+   "p25": 0.762,
+   "p50": 0.799,
+   "p75": 0.837,
+   "max": 0.902
+  },
+  "absent": {
+   "n": 15,
+   "min": 0.245,
+   "p25": 0.491,
+   "p50": 0.506,
+   "p75": 0.539,
+   "max": 0.798
+  }
+ },
+ "scan": [
+  {
+   "t": 0.05,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.06,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.07,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.08,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.09,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.1,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.11,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.12,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.13,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.14,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.15,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.16,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.17,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.18,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.19,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.2,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.21,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.22,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.23,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.24,
+   "pass_rate": 1.0,
+   "leak_rate": 1.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.25,
+   "pass_rate": 1.0,
+   "leak_rate": 0.933,
+   "youden_j": 0.067
+  },
+  {
+   "t": 0.26,
+   "pass_rate": 1.0,
+   "leak_rate": 0.933,
+   "youden_j": 0.067
+  },
+  {
+   "t": 0.27,
+   "pass_rate": 1.0,
+   "leak_rate": 0.933,
+   "youden_j": 0.067
+  },
+  {
+   "t": 0.28,
+   "pass_rate": 1.0,
+   "leak_rate": 0.933,
+   "youden_j": 0.067
+  },
+  {
+   "t": 0.29,
+   "pass_rate": 1.0,
+   "leak_rate": 0.933,
+   "youden_j": 0.067
+  },
+  {
+   "t": 0.3,
+   "pass_rate": 1.0,
+   "leak_rate": 0.933,
+   "youden_j": 0.067
+  },
+  {
+   "t": 0.31,
+   "pass_rate": 1.0,
+   "leak_rate": 0.933,
+   "youden_j": 0.067
+  },
+  {
+   "t": 0.32,
+   "pass_rate": 1.0,
+   "leak_rate": 0.933,
+   "youden_j": 0.067
+  },
+  {
+   "t": 0.33,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.34,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.35,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.36,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.37,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.38,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.39,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.4,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.41,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.42,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.43,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.44,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.45,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.46,
+   "pass_rate": 1.0,
+   "leak_rate": 0.867,
+   "youden_j": 0.133
+  },
+  {
+   "t": 0.47,
+   "pass_rate": 0.991,
+   "leak_rate": 0.8,
+   "youden_j": 0.191
+  },
+  {
+   "t": 0.48,
+   "pass_rate": 0.991,
+   "leak_rate": 0.8,
+   "youden_j": 0.191
+  },
+  {
+   "t": 0.49,
+   "pass_rate": 0.991,
+   "leak_rate": 0.8,
+   "youden_j": 0.191
+  },
+  {
+   "t": 0.5,
+   "pass_rate": 0.991,
+   "leak_rate": 0.667,
+   "youden_j": 0.324
+  },
+  {
+   "t": 0.51,
+   "pass_rate": 0.991,
+   "leak_rate": 0.4,
+   "youden_j": 0.591
+  },
+  {
+   "t": 0.52,
+   "pass_rate": 0.991,
+   "leak_rate": 0.267,
+   "youden_j": 0.724
+  },
+  {
+   "t": 0.53,
+   "pass_rate": 0.991,
+   "leak_rate": 0.267,
+   "youden_j": 0.724
+  },
+  {
+   "t": 0.54,
+   "pass_rate": 0.991,
+   "leak_rate": 0.2,
+   "youden_j": 0.791
+  },
+  {
+   "t": 0.55,
+   "pass_rate": 0.991,
+   "leak_rate": 0.2,
+   "youden_j": 0.791
+  },
+  {
+   "t": 0.56,
+   "pass_rate": 0.981,
+   "leak_rate": 0.2,
+   "youden_j": 0.781
+  },
+  {
+   "t": 0.57,
+   "pass_rate": 0.981,
+   "leak_rate": 0.2,
+   "youden_j": 0.781
+  },
+  {
+   "t": 0.58,
+   "pass_rate": 0.972,
+   "leak_rate": 0.2,
+   "youden_j": 0.772
+  },
+  {
+   "t": 0.59,
+   "pass_rate": 0.962,
+   "leak_rate": 0.2,
+   "youden_j": 0.762
+  },
+  {
+   "t": 0.6,
+   "pass_rate": 0.962,
+   "leak_rate": 0.2,
+   "youden_j": 0.762
+  },
+  {
+   "t": 0.61,
+   "pass_rate": 0.953,
+   "leak_rate": 0.2,
+   "youden_j": 0.753
+  },
+  {
+   "t": 0.62,
+   "pass_rate": 0.953,
+   "leak_rate": 0.133,
+   "youden_j": 0.819
+  },
+  {
+   "t": 0.63,
+   "pass_rate": 0.953,
+   "leak_rate": 0.133,
+   "youden_j": 0.819
+  },
+  {
+   "t": 0.64,
+   "pass_rate": 0.953,
+   "leak_rate": 0.133,
+   "youden_j": 0.819
+  },
+  {
+   "t": 0.65,
+   "pass_rate": 0.953,
+   "leak_rate": 0.133,
+   "youden_j": 0.819
+  },
+  {
+   "t": 0.66,
+   "pass_rate": 0.953,
+   "leak_rate": 0.133,
+   "youden_j": 0.819
+  },
+  {
+   "t": 0.67,
+   "pass_rate": 0.953,
+   "leak_rate": 0.133,
+   "youden_j": 0.819
+  },
+  {
+   "t": 0.68,
+   "pass_rate": 0.943,
+   "leak_rate": 0.133,
+   "youden_j": 0.81
+  },
+  {
+   "t": 0.69,
+   "pass_rate": 0.925,
+   "leak_rate": 0.067,
+   "youden_j": 0.858
+  },
+  {
+   "t": 0.7,
+   "pass_rate": 0.896,
+   "leak_rate": 0.067,
+   "youden_j": 0.83
+  },
+  {
+   "t": 0.71,
+   "pass_rate": 0.887,
+   "leak_rate": 0.067,
+   "youden_j": 0.82
+  },
+  {
+   "t": 0.72,
+   "pass_rate": 0.877,
+   "leak_rate": 0.067,
+   "youden_j": 0.811
+  },
+  {
+   "t": 0.73,
+   "pass_rate": 0.868,
+   "leak_rate": 0.067,
+   "youden_j": 0.801
+  },
+  {
+   "t": 0.74,
+   "pass_rate": 0.849,
+   "leak_rate": 0.067,
+   "youden_j": 0.782
+  },
+  {
+   "t": 0.75,
+   "pass_rate": 0.811,
+   "leak_rate": 0.067,
+   "youden_j": 0.745
+  },
+  {
+   "t": 0.76,
+   "pass_rate": 0.764,
+   "leak_rate": 0.067,
+   "youden_j": 0.697
+  },
+  {
+   "t": 0.77,
+   "pass_rate": 0.698,
+   "leak_rate": 0.067,
+   "youden_j": 0.631
+  },
+  {
+   "t": 0.78,
+   "pass_rate": 0.651,
+   "leak_rate": 0.067,
+   "youden_j": 0.584
+  },
+  {
+   "t": 0.79,
+   "pass_rate": 0.575,
+   "leak_rate": 0.067,
+   "youden_j": 0.509
+  },
+  {
+   "t": 0.8,
+   "pass_rate": 0.491,
+   "leak_rate": 0.0,
+   "youden_j": 0.491
+  },
+  {
+   "t": 0.81,
+   "pass_rate": 0.377,
+   "leak_rate": 0.0,
+   "youden_j": 0.377
+  },
+  {
+   "t": 0.82,
+   "pass_rate": 0.349,
+   "leak_rate": 0.0,
+   "youden_j": 0.349
+  },
+  {
+   "t": 0.83,
+   "pass_rate": 0.292,
+   "leak_rate": 0.0,
+   "youden_j": 0.292
+  },
+  {
+   "t": 0.84,
+   "pass_rate": 0.245,
+   "leak_rate": 0.0,
+   "youden_j": 0.245
+  },
+  {
+   "t": 0.85,
+   "pass_rate": 0.208,
+   "leak_rate": 0.0,
+   "youden_j": 0.208
+  },
+  {
+   "t": 0.86,
+   "pass_rate": 0.179,
+   "leak_rate": 0.0,
+   "youden_j": 0.179
+  },
+  {
+   "t": 0.87,
+   "pass_rate": 0.123,
+   "leak_rate": 0.0,
+   "youden_j": 0.123
+  },
+  {
+   "t": 0.88,
+   "pass_rate": 0.075,
+   "leak_rate": 0.0,
+   "youden_j": 0.075
+  },
+  {
+   "t": 0.89,
+   "pass_rate": 0.038,
+   "leak_rate": 0.0,
+   "youden_j": 0.038
+  },
+  {
+   "t": 0.9,
+   "pass_rate": 0.009,
+   "leak_rate": 0.0,
+   "youden_j": 0.009
+  },
+  {
+   "t": 0.91,
+   "pass_rate": 0.0,
+   "leak_rate": 0.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.92,
+   "pass_rate": 0.0,
+   "leak_rate": 0.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.93,
+   "pass_rate": 0.0,
+   "leak_rate": 0.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.94,
+   "pass_rate": 0.0,
+   "leak_rate": 0.0,
+   "youden_j": 0.0
+  },
+  {
+   "t": 0.95,
+   "pass_rate": 0.0,
+   "leak_rate": 0.0,
+   "youden_j": 0.0
+  }
+ ],
+ "recommended": {
+  "threshold": 0.69,
+  "youden_j": 0.858,
+  "pass_rate": 0.925,
+  "leak_rate": 0.067
+ },
+ "read_notes": {}
+}

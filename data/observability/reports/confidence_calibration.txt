@@ -1,0 +1,37 @@
+=== Evidence confidence distribution (Hybrid + Rerank) ===
+Answerable   n=106 min=0.464 p25=0.762 p50=0.799 p75=0.837 max=0.902
+Unsupported  n= 15 min=0.245 p25=0.491 p50=0.506 p75=0.539 max=0.798
+
+=== Threshold scan: answerable pass rate and unsupported pass rate at confidence >= t ===
+     t Answerable pass rate Unsupported pass rate  YoudenJ
+  0.05      1.000      1.000    0.000
+  0.10      1.000      1.000    0.000
+  0.15      1.000      1.000    0.000
+  0.20      1.000      1.000    0.000
+  0.25      1.000      0.933    0.067
+  0.30      1.000      0.933    0.067
+  0.33      1.000      0.867    0.133
+  0.35      1.000      0.867    0.133
+  0.40      1.000      0.867    0.133
+  0.45      1.000      0.867    0.133
+  0.47      0.991      0.800    0.191
+  0.50      0.991      0.667    0.324
+  0.51      0.991      0.400    0.591
+  0.52      0.991      0.267    0.724
+  0.54      0.991      0.200    0.791
+  0.55      0.991      0.200    0.791
+  0.60      0.962      0.200    0.762
+  0.62      0.953      0.133    0.819
+  0.65      0.953      0.133    0.819
+  0.69      0.925      0.067    0.858
+  0.70      0.896      0.067    0.830
+  0.75      0.811      0.067    0.745
+  0.80      0.491      0.000    0.491
+  0.85      0.208      0.000    0.208
+  0.90      0.009      0.000    0.009
+  0.95      0.000      0.000    0.000
+
+Recommended evidence_confidence_threshold = 0.69 (Youden J=0.858)
+Review the tradeoff before updating app/config.py. This command does not change the active threshold.
+
+Chart note: Unavailable; the dashboard uses its fallback.

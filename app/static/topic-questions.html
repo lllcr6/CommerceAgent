@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paw & Hearth · Topic questions</title>
+  <link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/static/paws.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/acceptance.css" />
+  <style>
+
+    .qrow {
+      border: 3px solid var(--ink); background: var(--paper); box-shadow: var(--shadow-sm);
+      padding: 10px 13px; margin-top: 10px;
+    }
+    .qrow .q { font-size: 13.5px; font-weight: 700; line-height: 1.6; }
+    .qrow .q .id { font-size: 11px; font-weight: 400; color: var(--muted); margin-right: 7px; }
+    .qrow .meta {
+      margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px 14px;
+      font-size: 11.5px; color: #6d6478; align-items: center;
+    }
+    .qrow .meta b { color: var(--ink); }
+    .tag {
+      font-size: 11px; border: 2px solid var(--ink); background: var(--cream); padding: 0 5px;
+    }
+    .tag.self { background: var(--fur); font-weight: 700; }
+    .raw { margin-top: 7px; font-size: 12px; color: #6d6478; line-height: 1.7; }
+    .raw .k { font-size: 10.5px; color: var(--muted); display: block; }
+
+    .pager { margin-top: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .pager .info { font-size: 12.5px; }
+    .pager .info b { font-variant-numeric: tabular-nums; }
+    .picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .picker a {
+      font-size: 12px; text-decoration: none; color: var(--ink); border: 3px solid var(--ink);
+      background: var(--paper); padding: 3px 9px; box-shadow: 2px 2px 0 var(--ink);
+    }
+    .picker a.on { background: var(--fur); font-weight: 700; }
+    .picker a .n { color: var(--muted); margin-left: 5px; }
+    .picker a.on .n { color: var(--ink); }
+    .picker a.zero { opacity: .45; }
+  </style>
+  <link id="mh-admin-css" rel="stylesheet" href="/static/admin.css" />
+<link rel="stylesheet" href="/static/pet-theme.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1 id="title">Questions by category</h1>
+      <span class="sub" id="sub">Questions assigned to this category,Browse all pages</span>
+      <span class="spacer"></span>
+      <a class="btn" href="/topics">← Back to topics</a>
+      <button class="btn" id="refreshBtn">Refresh</button>
+    </div>
+
+    <div id="picker"></div>
+    <div id="body"><div class="miss">Loading…</div></div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="/static/admin.js"></script>
+  <script src="/static/acceptance.js"></script>
+  <script>
+
+    const SIZE = 10;
+    const SOURCE_LABEL = {
+      retrieval_low_conf: "Low retrieval confidence", self_check: "Generation self-check found insufficient evidence", user_feedback: "Customer marked unresolved",
+    };
+
+    const params = () => new URLSearchParams(location.search);
+    const curLabel = () => params().get("label") || "";
+    const curPage = () => Math.max(1, parseInt(params().get("page") || "1", 10));
+
+    function go(label, page) {
+      const q = new URLSearchParams({ label, page: String(page) });
+      location.search = "?" + q.toString();
+    }
+
+    function qrow(it, label) {
+      const box = el("div", "qrow");
+      const q = el("div", "q");
+      q.appendChild(el("span", "id", "#" + it.question_id));
+      q.appendChild(document.createTextNode(it.text));
+      box.appendChild(q);
+
+      const meta = el("div", "meta");
+      for (const lb of it.labels || []) {
+        meta.appendChild(el("span", "tag" + (lb === label ? " self" : ""), lb));
+      }
+      const bits = [
+        ["Source", SOURCE_LABEL[it.source] || it.source],
+        ["Merge synonyms", it.occurrence_count ? it.occurrence_count + " original questions" : "Not merged"],
+        ["Review", it.review_status || "Not queued"],
+        ["Classified", fmtTime(it.classified_at)],
+      ];
+      for (const [k, v] of bits) {
+        const s = el("span");
+        s.appendChild(document.createTextNode(k + " "));
+        s.appendChild(el("b", null, v));
+        meta.appendChild(s);
+      }
+      box.appendChild(meta);
+
+      if (it.normalized && it.raw_question && it.raw_question !== it.text) {
+        const raw = el("div", "raw");
+        raw.appendChild(el("span", "k", "Original customer question"));
+        raw.appendChild(document.createTextNode(it.raw_question));
+        box.appendChild(raw);
+      }
+      return box;
+    }
+
+    function pager(d) {
+      const box = el("div", "pager");
+      const prev = el("button", "btn sm", "← Previous");
+      prev.disabled = d.page <= 1;
+      prev.onclick = () => go(d.label, d.page - 1);
+      const next = el("button", "btn sm", "Next →");
+      next.disabled = d.page >= d.pages;
+      next.onclick = () => go(d.label, d.page + 1);
+      const info = el("div", "info");
+      info.innerHTML = "Page <b>" + d.page + "</b> / " + d.pages + " pages · category total <b>"
+        + d.total + "</b> items · page size " + d.size + " items";
+      box.appendChild(prev);
+      box.appendChild(next);
+      box.appendChild(info);
+      return box;
+    }
+
+
+    async function renderPicker(label) {
+      try {
+        const dist = await api("/api/topics/distribution");
+        const box = el("div", "picker");
+        [...dist.classes].sort((a, b) => b.count - a.count).forEach((c) => {
+          const a = el("a", (c.label === label ? "on " : "") + (c.count ? "" : "zero"), c.label);
+          a.href = "/topics/questions?label=" + encodeURIComponent(c.label) + "&page=1";
+          a.appendChild(el("span", "n", String(c.count)));
+          box.appendChild(a);
+        });
+        $("picker").innerHTML = "";
+        $("picker").appendChild(box);
+      } catch (e) {
+        $("picker").innerHTML = "";
+      }
+    }
+
+    async function load() {
+      const label = curLabel(), body = $("body");
+      if (!label) {
+        body.innerHTML = "";
+        body.appendChild(missingBox("No category selected. Return to topics,Select a category to continue."));
+        return;
+      }
+      $("title").textContent = label;
+      try {
+        const d = await api("/api/topics/questions?label=" + encodeURIComponent(label)
+          + "&page=" + curPage() + "&size=" + SIZE);
+        $("sub").textContent = "Classified as" + label + "」questions,Total " + d.total + " items";
+        body.innerHTML = "";
+        if (!d.total) {
+          body.appendChild(missingBox("No questions in this category. Try another category,Or run background classification first."));
+          return;
+        }
+        const p = el("div", "panel");
+        const h = el("h2", null, label);
+        h.appendChild(el("span", "pill info", d.total + " items · page " + d.page + "/" + d.pages + " pages"));
+        p.appendChild(h);
+        p.appendChild(el("p", "lede",
+          "Questions assigned to this category,A multi-label question appears in each matching category."
+          + "Use normalized questions from the merge stage,Original wording is shown below."));
+        for (const it of d.items) p.appendChild(qrow(it, label));
+        p.appendChild(pager(d));
+        body.appendChild(p);
+      } catch (e) {
+        body.innerHTML = "";
+        body.appendChild(missingBox("Could not load data: " + e.message));
+        toast("Could not load data: " + e.message, true);
+      }
+    }
+
+    $("refreshBtn").onclick = load;
+    mountAdminNav("/topics");
+    renderPicker(curLabel());
+    load();
+  </script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paw & Hearth · Classifier error review</title>
+  <link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/static/paws.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/acceptance.css" />
+  <style>
+    .ecard {
+      border: 3px solid var(--ink); background: var(--paper); padding: 10px 13px; margin-top: 10px;
+    }
+    .ecard .q { font-size: 13.5px; font-weight: 700; line-height: 1.7; }
+    .ecard .cmp { margin-top: 8px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 12.5px; }
+    .ecard .cmp .side { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .ecard .cmp .k { color: var(--muted); }
+    .lb {
+      border: 2px solid var(--ink); padding: 1px 7px; font-size: 12px; background: var(--cream);
+      white-space: nowrap;
+    }
+    .lb.ok { background: var(--online); }
+    .lb.missed { background: #ffd4dc; border-color: var(--error); color: #8e1f31; }
+    .lb.extra { background: var(--fur); }
+    .ecard .why { margin-top: 8px; font-size: 12px; color: #6d6478; line-height: 1.75; }
+    .kinds { display: flex; gap: 12px; flex-wrap: wrap; }
+    .kindbox { border: 3px solid var(--ink); background: var(--paper); padding: 9px 13px; min-width: 200px; flex: 1; }
+    .kindbox .n { font-size: 20px; font-weight: 700; }
+    .kindbox .rp { font-size: 11.5px; color: #6d6478; line-height: 1.7; margin-top: 4px; }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #6d6478; margin-top: 10px; }
+  </style>
+  <link id="mh-admin-css" rel="stylesheet" href="/static/admin.css" />
+<link rel="stylesheet" href="/static/pet-theme.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Classifier error review</h1>
+      <span class="sub">Which categories fail · False positives or negatives · Label quality</span>
+      <span class="spacer"></span>
+      <button class="btn" id="refreshBtn">Refresh</button>
+    </div>
+
+    <div class="gatebar" id="gatebar"></div>
+    <div id="body"><div class="panel"><div class="miss">Loading…</div></div></div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="/static/admin.js"></script>
+  <script src="/static/acceptance.js"></script>
+  <script>
+    let jobSpecs = {};
+    const KIND_PILL = { "Missed labels": "info", "Wrong category": "fail", "Extra labels": "running" };
+
+    async function load() {
+      try {
+        const [d, j] = await Promise.all([
+          api("/api/acceptance/errors"), api("/api/jobs"),
+        ]);
+        jobSpecs = Object.fromEntries(j.jobs.map((x) => [x.name, x]));
+        render(d);
+      } catch (e) {
+        $("body").textContent = "";
+        $("body").appendChild(missingBox("Could not load: " + e.message));
+      }
+    }
+
+    function panel(title, lede, pill) {
+      const p = el("div", "panel");
+      const h = el("h2", "", title);
+      if (pill) { const [c, t] = pill; h.appendChild(el("span", "pill " + c, t)); }
+      p.appendChild(h);
+      if (lede) p.appendChild(el("p", "lede", lede));
+      return p;
+    }
+
+    function labelRow(kind, labels, marks) {
+      const side = el("div", "side");
+      side.appendChild(el("span", "k", kind));
+      if (!labels.length) side.appendChild(el("span", "lb", "（None)"));
+      for (const l of labels) side.appendChild(el("span", "lb " + (marks[l] || "ok"), l));
+      return side;
+    }
+
+    function render(d) {
+      renderGatebar(d);
+      const body = $("body");
+      body.textContent = "";
+
+      if (!d.eval.present) {
+        const p = panel("Error review");
+        p.appendChild(missingBox(d.eval.hint || "No evaluation artifact yet. Run make roberta-eval"));
+        if (jobSpecs["roberta-eval"]) p.appendChild(jobRow([jobSpecs["roberta-eval"]], load));
+        body.appendChild(p);
+        return;
+      }
+
+
+      const pAcc = panel("Error counts and matrix entries ≠ Matrix entries",
+        "Three error types: missing labels——A missed label counts once 1 misses; extra labels——An unexpected label counts as 1 false positives;"
+        + "A wrong replacement label contributes two entries: one missed label and one extra label."
+        + "The list has fewer rows than the matrix because wrong-label errors count twice.");
+      const acc = el("div", "kinds");
+      for (const [kind, n] of Object.entries(d.kinds)) {
+        const box = el("div", "kindbox");
+        const head = el("div");
+        head.appendChild(el("span", "pill " + (KIND_PILL[kind] || "info"), kind));
+        head.appendChild(el("span", "n", " " + n + " items"));
+        box.appendChild(head);
+        box.appendChild(el("div", "rp", "Suggested fix: " + (d.recipes[kind] || "—")));
+        acc.appendChild(box);
+      }
+      pAcc.appendChild(acc);
+      pAcc.appendChild(el("div", "tip",
+        d.errors.length + " errors → Matrix counts " + d.matrix_entries + " entries:"
+        + "False positives " + d.total_fp + " times; false negatives " + d.total_fn + "  times."
+        + "Too few examples to justify retraining yet——Retrain after collecting enough reviewed examples."));
+      body.appendChild(pAcc);
+
+
+      const pPair = panel("Category boundaries: competing labels",
+        "Pair missing labels with ← Unexpected labels are counted in pairs. Recurring pairs suggest overlapping terms"
+        + "Boundary cases need paired examples so the model learns the distinction.");
+      if (!d.pairs.length) {
+        pPair.appendChild(el("div", "miss", "No competing-label errors this run"));
+      } else {
+        const box = el("div", "scroll-x");
+        const t = el("table", "tbl");
+        const hr = el("tr");
+        for (const h of ["Missed category (false negative)", "Tier", "Unexpected category (false positive)", "Count"]) hr.appendChild(el("th", "", h));
+        const thead = el("thead"); thead.appendChild(hr); t.appendChild(thead);
+        const tb = el("tbody");
+        for (const p of d.pairs) {
+          const tr = el("tr", p.count > 1 ? "bad" : "");
+          const a = el("td"); a.appendChild(el("span", "lb missed", p.missed)); tr.appendChild(a);
+          const sv = el("td");
+          if (p.severity) sv.appendChild(el("span", "pill sev-" + p.severity, p.severity));
+          tr.appendChild(sv);
+          const b = el("td"); b.appendChild(el("span", "lb extra", p.grabbed)); tr.appendChild(b);
+          tr.appendChild(el("td", "num", "×" + p.count));
+          tb.appendChild(tr);
+        }
+        t.appendChild(tb); box.appendChild(t);
+        pPair.appendChild(box);
+        pPair.appendChild(el("div", "tip",
+          "Occurrences 2 Repeated pairs highlighted above——Recurring pairs indicate systematic bias; prioritize paired examples."));
+      }
+      body.appendChild(pPair);
+
+
+      const pList = panel("Compare reference and prediction for each example vs Prediction",
+        "Missed labels are red, extra labels orange, and correct labels green."
+        + "Typos and conversational noise are intentional; errors still count.");
+      for (const e of d.errors) {
+        const card = el("div", "ecard");
+        const head = el("div", "cmp");
+        head.appendChild(el("span", "pill " + (KIND_PILL[e.kind] || "info"), e.kind));
+        head.appendChild(el("span", "k", "Record " + e.matrix_entries + " matrix entries"));
+        card.appendChild(head);
+        card.appendChild(el("div", "q", "「" + e.text + "」"));
+        const marksGold = {}, marksPred = {};
+        for (const l of e.missed) marksGold[l] = "missed";
+        for (const l of e.extra) marksPred[l] = "extra";
+        const cmp = el("div", "cmp");
+        cmp.appendChild(labelRow("Reference", e.gold, marksGold));
+        cmp.appendChild(labelRow("Prediction", e.pred, marksPred));
+        card.appendChild(cmp);
+        const bits = [];
+        if (e.missed.length) bits.push("False negatives: " + e.missed.join("、"));
+        if (e.extra.length) bits.push("False positives: " + e.extra.join("、"));
+        bits.push("Suggested fix: " + (d.recipes[e.kind] || "—"));
+        card.appendChild(el("div", "why", bits.join("　|　")));
+        pList.appendChild(card);
+      }
+      pList.appendChild(el("div", "legend"));
+      if (jobSpecs["roberta-eval"]) pList.appendChild(jobRow([jobSpecs["roberta-eval"]], load,
+        "Rerunning evaluation refreshes this error list"));
+      body.appendChild(pList);
+    }
+
+    function renderGatebar(d) {
+      const bar = $("gatebar");
+      bar.textContent = "";
+      const add = (label, value, cls) => {
+        const s = el("div", "stat " + (cls || ""));
+        s.appendChild(el("span", "", label));
+        const b = el("b", "", value);
+        if (String(value).length > 6) { b.style.fontSize = "14px"; b.style.lineHeight = "2"; }
+        s.appendChild(b);
+        bar.appendChild(s);
+      };
+      if (!d.eval.present) { add("Evaluation artifacts", "Not generated", "fail"); return; }
+      add("Errors", d.errors.length + " items");
+      add("Matrix entries", d.matrix_entries + " entries");
+      add("False positives FP", d.total_fp + " times");
+      add("False negatives FN", d.total_fn + " times");
+      add("Test set", d.eval.test_size + " items");
+      add("Evaluated", fmtTime(d.eval.ran_at));
+    }
+
+    mountAdminNav("/acceptance/errors");
+    $("refreshBtn").addEventListener("click", load);
+    load();
+  </script>
+</body>
+</html>

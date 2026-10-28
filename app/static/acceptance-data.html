@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paw & Hearth · Classifier datasets</title>
+  <link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/static/paws.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/acceptance.css" />
+  <style>
+
+    .flow { display: flex; align-items: stretch; gap: 6px; flex-wrap: wrap; }
+    .step {
+      border: 3px solid var(--ink); background: var(--paper); padding: 9px 12px;
+      min-width: 150px; flex: 1;
+    }
+    .step .stage { font-size: 11.5px; color: var(--muted); }
+    .step b { display: block; font-size: 22px; line-height: 1.35; font-variant-numeric: tabular-nums; }
+    .step .desc { font-size: 11.5px; line-height: 1.65; margin-top: 3px; }
+    .step .f { font-size: 11px; color: var(--muted); margin-top: 4px; word-break: break-all; }
+    .step.miss b { color: var(--muted); }
+    .arrow { align-self: center; font-size: 20px; color: var(--ink); font-weight: 700; }
+    .splitgrid { display: flex; gap: 6px; flex-wrap: wrap; }
+    .step.exam { background: var(--cream); }
+
+
+    td.b { padding: 0 !important; }
+    .distbar { display: flex; align-items: center; gap: 6px; padding: 3px 8px; }
+    .distbar .track { flex: 1; min-width: 40px; height: 9px; border: 2px solid var(--ink); background: var(--cream); }
+    .distbar .fill { height: 100%; background: var(--fur); display: block; }
+    .distbar .v { width: 2.6em; text-align: right; font-variant-numeric: tabular-nums; }
+    .leak { display: flex; gap: 12px; flex-wrap: wrap; }
+  </style>
+  <link id="mh-admin-css" rel="stylesheet" href="/static/admin.css" />
+<link rel="stylesheet" href="/static/pet-theme.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Classifier datasets</h1>
+      <span class="sub">Corpus lineage · Dataset splits · Training and ONNX Artifact inventory</span>
+      <span class="spacer"></span>
+      <button class="btn" id="refreshBtn">Refresh</button>
+    </div>
+
+    <div class="gatebar" id="gatebar"></div>
+    <div id="body"><div class="panel"><div class="miss">Loading…</div></div></div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="/static/admin.js"></script>
+  <script src="/static/acceptance.js"></script>
+  <script>
+    let jobSpecs = {};
+    const SPLIT_KEYS = ["train", "val", "test"];
+    const SPLIT_LABEL = { train: "Training set", val: "Validation set", test: "Test set" };
+
+    async function load() {
+      try {
+        const [d, j] = await Promise.all([
+          api("/api/acceptance/data"), api("/api/jobs"),
+        ]);
+        jobSpecs = Object.fromEntries(j.jobs.map((x) => [x.name, x]));
+        render(d);
+      } catch (e) {
+        $("body").textContent = "";
+        $("body").appendChild(missingBox("Could not load: " + e.message));
+      }
+    }
+
+    function panel(title, lede, pill) {
+      const p = el("div", "panel");
+      const h = el("h2", "", title);
+      if (pill) { const [c, t] = pill; h.appendChild(el("span", "pill " + c, t)); }
+      p.appendChild(h);
+      if (lede) p.appendChild(el("p", "lede", lede));
+      return p;
+    }
+
+    function fileTable(rows) {
+      const box = el("div", "scroll-x");
+      const t = el("table", "tbl");
+      const head = el("tr");
+      for (const h of ["Artifact", "Count", "Size", "Last saved"]) head.appendChild(el("th", "", h));
+      const thead = el("thead"); thead.appendChild(head); t.appendChild(thead);
+      const tb = el("tbody");
+      for (const r of rows) {
+        const tr = el("tr", r.present ? "" : "bad");
+        tr.appendChild(el("td", "", r.path));
+        tr.appendChild(el("td", "num", r.present ? String(r.lines ?? "—") : "Missing"));
+        tr.appendChild(el("td", "num", r.present ? fmtBytes(r.bytes) : "—"));
+        tr.appendChild(el("td", "", r.present ? fmtTime(r.mtime) : "—"));
+        tb.appendChild(tr);
+      }
+      t.appendChild(tb); box.appendChild(t);
+      return box;
+    }
+
+    function render(d) {
+      renderGatebar(d);
+      const body = $("body");
+      body.textContent = "";
+      const ds = d.dataset, sp = ds.splits;
+
+
+      const pFlow = panel("English dataset: scenarios to frozen partitions",
+        "Families are assigned to train, validation or test before variants are generated. Each family stays in one partition.");
+      const flow = el("div", "flow");
+      d.lineage.forEach((s, i) => {
+        if (i) flow.appendChild(el("div", "arrow", "→"));
+        const step = el("div", "step" + (s.present ? "" : " miss"));
+        step.appendChild(el("div", "stage", s.stage));
+        step.appendChild(el("b", "", s.present ? String(s.lines ?? "Saved") : "Missing"));
+        step.appendChild(el("div", "desc", s.desc));
+        step.appendChild(el("div", "f", s.file));
+        flow.appendChild(step);
+      });
+      flow.appendChild(el("div", "arrow", "→"));
+      const exams = el("div", "step exam");
+      exams.appendChild(el("div", "stage", "Frozen family-based partitions"));
+      exams.appendChild(el("b", "", SPLIT_KEYS.map((k) => sp[k].size).join(" / ")));
+      exams.appendChild(el("div", "desc", "Train / validation / test; no family crosses partitions"));
+      exams.appendChild(el("div", "f", "data/roberta/dataset/*.jsonl"));
+      flow.appendChild(exams);
+      pFlow.appendChild(flow);
+      pFlow.appendChild(fileTable([...d.lineage, d.sample_review]));
+      pFlow.appendChild(el("div", "tip",
+        "The saved review_sample.jsonl contains expressions for independent annotation review. This release is synthetic draft data."));
+      pFlow.appendChild(jobRow(
+        ["roberta-corpus", "roberta-dataset"].map((n) => jobSpecs[n]).filter(Boolean), load));
+      body.appendChild(pFlow);
+
+
+      const pSplit = panel("Dataset splits and leakage checks",
+        "Exact-text and family/group overlap must be zero. These checks do not prove exhaustive semantic independence.",
+        ds.clean ? ["pass", "No overlap"] : ["fail", "Overlapping splits invalidate the scores"]);
+      const leak = el("div", "leak");
+      for (const [k, label] of [["train_val", "Training ∩ Validation"], ["train_test", "Training ∩ Test"],
+        ["val_test", "Validation ∩ Test"]]) {
+        const s = el("div", "stat " + (ds.leaks[k] === 0 ? "pass" : "fail"));
+        s.appendChild(el("span", "", label));
+        s.appendChild(el("b", "", ds.leaks[k] + " items"));
+        leak.appendChild(s);
+      }
+      for (const k of SPLIT_KEYS) {
+        const s = el("div", "stat");
+        s.appendChild(el("span", "", SPLIT_LABEL[k] + " Multi-label"));
+        s.appendChild(el("b", "", sp[k].multi_label + " items"));
+        leak.appendChild(s);
+      }
+      pSplit.appendChild(leak);
+
+      const box = el("div", "scroll-x");
+      box.style.marginTop = "12px";
+      const t = el("table", "tbl");
+      const hr = el("tr");
+      hr.appendChild(el("th", "", "Category"));
+      for (const k of SPLIT_KEYS) hr.appendChild(el("th", "", SPLIT_LABEL[k] + "（" + sp[k].size + "）"));
+      const thead = el("thead"); thead.appendChild(hr); t.appendChild(thead);
+      const tb = el("tbody");
+      const maxOf = {};
+      for (const k of SPLIT_KEYS) maxOf[k] = Math.max(1, ...Object.values(sp[k].counts));
+      for (const name of d.topic_names) {
+        const tr = el("tr");
+        tr.appendChild(el("td", "", name));
+        for (const k of SPLIT_KEYS) {
+          const td = el("td", "b");
+          const bar = el("div", "distbar");
+          const track = el("span", "track");
+          const fill = el("span", "fill");
+          fill.style.width = Math.round(sp[k].counts[name] / maxOf[k] * 100) + "%";
+          track.appendChild(fill);
+          bar.appendChild(track);
+          bar.appendChild(el("span", "v", String(sp[k].counts[name])));
+          td.appendChild(bar);
+          tr.appendChild(td);
+        }
+        tb.appendChild(tr);
+      }
+      t.appendChild(tb); box.appendChild(t);
+      pSplit.appendChild(box);
+      pSplit.appendChild(el("div", "tip",
+        "Each multi-label match is counted, so column totals can exceed question counts."));
+      body.appendChild(pSplit);
+
+
+      const pModel = panel("Training artifacts",
+        "Weight + tokenizer + threshold.json。The small artifact stores the selected threshold and validation scores"
+        + "Evaluation and serving read the same file——This is part of the deployed classifier.",
+        d.model.trio_ok ? ["pass", "Artifacts complete"] : ["fail", "Artifacts incomplete"]);
+      pModel.appendChild(fileTable(d.model.files));
+      const thr = el("div", "tip");
+      thr.appendChild(el("b", "", "threshold.json"));
+      thr.appendChild(el("span", "", " Active decision threshold " + d.model.threshold
+        + "；Saved " + fmtTime(d.model.threshold_file.mtime)
+        + "，" + fmtBytes(d.model.threshold_file.bytes) + "。"));
+      pModel.appendChild(thr);
+      pModel.appendChild(jobRow([jobSpecs["roberta-train"]].filter(Boolean), load,
+        "Training may take minutes and overwrite existing weights"));
+      body.appendChild(pModel);
+
+      /* ④ ONNX Artifact */
+      const ex = d.onnx.report;
+      const pOnnx = panel("ONNX Export and prediction consistency",
+        "Compare every test-set prediction after export torch，All selected labels must match after export"
+        + "Runtime dependencies onnxruntime + tokenizers，No training dependency torch。",
+        ex.present ? (ex.passed ? ["pass", "Predictions match exactly"] : ["fail", "Mismatch detected"]) : ["missing", "Not exported"]);
+      pOnnx.appendChild(fileTable(d.onnx.files));
+      if (ex.present) {
+        pOnnx.appendChild(el("div", "tip",
+          "Validate " + ex.checked + " items; mismatched " + ex.mismatch + " items;opset " + ex.opset
+          + "，model.onnx " + fmtBytes(ex.onnx_bytes) + "，Exported " + fmtTime(ex.ran_at) + "。"));
+      } else {
+        pOnnx.appendChild(missingBox(ex.hint));
+      }
+      pOnnx.appendChild(jobRow(
+        ["roberta-export", "classifier-up", "classifier-down"].map((n) => jobSpecs[n]).filter(Boolean),
+        load));
+      body.appendChild(pOnnx);
+    }
+
+    function renderGatebar(d) {
+      const bar = $("gatebar");
+      bar.textContent = "";
+      const ds = d.dataset;
+      const add = (label, value, cls) => {
+        const s = el("div", "stat " + (cls || ""));
+        s.appendChild(el("span", "", label));
+        const b = el("b", "", value);
+        if (String(value).length > 6) { b.style.fontSize = "14px"; b.style.lineHeight = "2"; }
+        s.appendChild(b);
+        bar.appendChild(s);
+      };
+      const lab = d.lineage.find((x) => x.file === "source/scenarios.jsonl");
+      add("Scenario families", (lab && lab.present ? lab.lines : "—") + " items");
+      for (const k of SPLIT_KEYS) add(SPLIT_LABEL[k], ds.splits[k].size + " items");
+      add("Dataset leakage", ds.clean ? "0 items" : "Available", ds.clean ? "pass" : "fail");
+      add("Active threshold", String(d.model.threshold ?? "—"));
+    }
+
+    mountAdminNav("/acceptance/data");
+    $("refreshBtn").addEventListener("click", load);
+    load();
+  </script>
+</body>
+</html>

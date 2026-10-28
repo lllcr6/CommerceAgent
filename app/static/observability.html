@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paw & Hearth · Observability & costs</title>
+  <link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/static/paws.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/acceptance.css" />
+  <style>
+    .kpis { display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); margin-top: 4px; }
+    @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+    .kpi {
+      background: var(--paper); border: 3px solid var(--ink); box-shadow: var(--shadow-sm);
+      padding: 10px 13px 12px;
+    }
+    .kpi .k-label { font-size: 11.5px; color: var(--muted); }
+    .kpi .k-val { font-size: 25px; font-weight: 700; line-height: 1.4; font-variant-numeric: tabular-nums; }
+    .kpi .k-val small { font-size: 13px; margin-left: 2px; }
+    .kpi .k-sub { font-size: 11.5px; color: #6d6478; line-height: 1.7; }
+
+
+    .shares { margin-top: 14px; display: flex; flex-direction: column; gap: 11px; }
+    .sh-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; }
+    .sh-label .nm b { font-weight: 700; }
+    .sh-label .nm span { color: var(--muted); font-size: 11px; margin-left: 7px; }
+    .sh-label .pv { font-variant-numeric: tabular-nums; font-weight: 700; }
+    .bar-track { height: 15px; border: 2px solid var(--ink); background: var(--cream); margin-top: 4px; }
+    .bar-fill { height: 100%; display: block; background: var(--sky); }
+    .bar-fill.top { background: var(--coral); }
+
+
+    .read {
+      margin-top: 13px; border: 3px dashed var(--ink); background: var(--paper);
+      padding: 9px 13px; font-size: 12.5px; line-height: 1.8;
+    }
+    .read b { background: var(--fur); padding: 0 4px; border: 2px solid var(--ink); }
+    .read::before {
+      content: "How to read"; float: left; font-size: 11px; background: var(--ink); color: var(--cream);
+      padding: 1px 7px; margin: 2px 9px 2px 0;
+    }
+
+    .subhead { font-size: 13px; font-weight: 700; margin: 16px 0 2px; }
+    .subhead .unit { color: var(--muted); font-weight: 400; font-size: 11.5px; margin-left: 7px; }
+
+    table.tbl td.up { color: #2f8f3c; }
+    table.tbl td.down { background: #ffe9ec; color: var(--error); font-weight: 700; }
+    table.tbl td.flat { color: var(--muted); }
+    table.tbl td .arrow { margin-left: 5px; }
+
+    .chart-scroll { overflow-x: auto; }
+    svg.chart { display: block; width: 100%; height: auto; min-width: 560px; font-family: inherit; }
+    svg .axis { fill: var(--muted); font-size: 11px; }
+    svg .glabel { fill: var(--ink); font-size: 12px; font-weight: 700; }
+    svg .grid line { stroke: rgba(43,38,50,0.16); stroke-width: 1; }
+    svg .base { stroke: var(--ink); stroke-width: 2.5; }
+    svg .ln { fill: none; stroke-width: 2.5; }
+    svg .pick { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 5 4; }
+    svg .inuse { stroke: var(--violet); stroke-width: 2; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 2px; }
+    .lg { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+    .lg i { width: 12px; height: 12px; border: 2px solid var(--ink); flex: none; }
+
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+    .note { border: 3px solid var(--ink); background: var(--paper); padding: 10px 13px; }
+    .note h3 { margin: 0 0 5px; font-size: 12.5px; }
+    .note p { margin: 0; font-size: 12px; color: #6d6478; line-height: 1.8; }
+    .note code { background: var(--cream); border: 2px solid var(--ink); padding: 0 4px; font-size: 11.5px; }
+
+    .miss {background:transparent!important;border:0!important;box-shadow:none!important;padding:12px 0!important;color:var(--muted);}
+    .price-editor {margin-top:18px;padding:16px 18px;border:1px solid #cbdcce;border-radius:14px;background:#f1f6ef;}
+    .price-editor h3,.labor-reference h3 {margin:0 0 8px;}
+    .price-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) minmax(0,1.2fr);gap:18px;align-items:start;margin:12px 0 0;}
+    .price-field {display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:600;}
+    .price-field input {width:100%;box-sizing:border-box;min-width:0;padding:12px 14px;border:1px solid #becfc1;border-radius:10px;background:#fffefa;font:inherit;color:var(--ink);}
+    .price-field input:focus {outline:2px solid #54836d;outline-offset:2px;}
+    .price-field input[aria-invalid=true] {border-color:#b44a62;}
+    .price-result {display:flex;flex-direction:column;gap:8px;min-width:0;padding-left:18px;border-left:1px solid #cbdcce;}
+    .price-result > span {font-size:12px;font-weight:700;line-height:1.5;}
+    .price-result strong {display:flex;align-items:center;min-height:42px;font-size:26px;line-height:1.2;color:#38634f;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+    .price-note {margin:10px 0 0;font-size:12px;color:var(--muted);line-height:1.5;}
+    .labor-reference {margin:12px 0 18px;font-size:12px;color:var(--muted);line-height:1.6;}
+    @media(max-width:600px) {.price-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.price-result{grid-column:1/-1;padding:10px 0 0;border-left:0;border-top:1px solid #cbdcce;flex-direction:row;align-items:center;justify-content:space-between}.price-result strong{min-height:32px;font-size:24px}.price-editor{padding:14px}}
+  </style>
+  <link id="mh-admin-css" rel="stylesheet" href="/static/admin.css" />
+<link rel="stylesheet" href="/static/pet-theme.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Observability & costs</h1>
+      <span class="sub">Cost by intent · Quality trends · Fallback calibration</span>
+      <span class="spacer"></span>
+      <button class="btn" id="refreshBtn">Refresh</button>
+    </div>
+
+    <div id="body"><div class="miss">Loading…</div></div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="/static/admin.js"></script>
+  <script src="/static/acceptance.js"></script>
+  <script src="/static/usage-cost.js"></script>
+  <script>
+
+    const NS = "http://www.w3.org/2000/svg";
+    const METRIC_LABEL = { precision_at_5: "Precision@5",
+      recall_at_5: "Recall@5", recall_at_10: "Recall@10", mrr: "MRR",
+      faithfulness: "Faithfulness", refusal_rate: "Refusal rate",
+    };
+    const DELTA_EPS = 0.005;
+    const fmt3 = (v) => (v === null || v === undefined ? "—" : Number(v).toFixed(3));
+    const pct = (v) => (v === null || v === undefined ? "—" : Math.round(v * 100) + "%");
+    const thousands = (n) => (n === null || n === undefined ? "—" : Number(n).toLocaleString("en-US"));
+
+    function svgEl(tag, attrs, txt) {
+      const e = document.createElementNS(NS, tag);
+      for (const k in attrs) e.setAttribute(k, attrs[k]);
+      if (txt !== undefined && txt !== null) e.textContent = txt;
+      return e;
+    }
+
+    function kpis(items) {
+      const box = el("div", "kpis");
+      for (const k of items) {
+        const c = el("div", "kpi");
+        c.appendChild(el("div", "k-label", k.label));
+        const v = el("div", "k-val", k.val);
+        if (k.unit) v.appendChild(el("small", null, k.unit));
+        c.appendChild(v);
+        c.appendChild(el("div", "k-sub", k.sub));
+        box.appendChild(c);
+      }
+      return box;
+    }
+
+    function table(headers, rows) {
+      const t = el("table", "tbl");
+      const thead = el("thead"), tr = el("tr");
+      for (const h of headers) tr.appendChild(el("th", null, h));
+      thead.appendChild(tr);
+      t.appendChild(thead);
+      const tb = el("tbody");
+      for (const r of rows) tb.appendChild(r);
+      t.appendChild(tb);
+      const scroll = el("div", "scroll-x");
+      scroll.appendChild(t);
+      return scroll;
+    }
+
+    function panelHead(p, title, pill, lede) {
+      const h = el("h2", null, title);
+
+      p.appendChild(h);
+      p.appendChild(el("p", "lede", lede));
+    }
+
+
+    function jobFoot(p, block) {
+      p.appendChild(el("div", "subhead", "Rerun on this page"));
+      p.appendChild(jobRow([block.job], load));
+    }
+
+
+    function costPanel(d) {
+      const p = el("div", "panel");
+      panelHead(p, "Cost by intent", ["Data source Langfuse", "info"],
+        "The backend records input and output usage by intent. Synthetic Agent evaluations are excluded. "
+        + "Use the breakdown to identify routes worth optimizing.");
+      if (!d.present || !d.rows.length) {
+        p.appendChild(missingBox(d.hint));
+        return p;
+      }
+      const m = d.meta, top = d.top;
+      p.appendChild(kpis([
+        { label: "Largest token share", val: window.petLabel(top.intent), sub: "Share " + pct(top.share) + " · Per request " + thousands(top.avg_tokens) + " token" },
+        { label: "Recorded tokens", val: thousands(d.total_tokens), sub: d.total_requests + " requests · recent " + m.days + " days" },
+        { label: "Intent routes", val: String(d.rows.length), sub: "Intents found in the selected window" },
+        { label: "Last run", val: fmtTime(m.generated_at), sub: "Local records; refresh this page for new usage" },
+      ]));
+
+      const shares = el("div", "shares");
+      for (const r of d.rows) {
+        const w = el("div");
+        const lab = el("div", "sh-label");
+        const nm = el("div", "nm");
+        nm.appendChild(el("b", null, window.petLabel(r.intent)));
+        nm.appendChild(el("span", null, r.count + " calls · average " + thousands(r.avg_tokens) + " token"));
+        lab.appendChild(nm);
+        lab.appendChild(el("div", "pv", pct(r.share) + " · " + thousands(r.tokens)));
+        w.appendChild(lab);
+        const track = el("div", "bar-track");
+        const fill = el("span", "bar-fill" + (r === top ? " top" : ""));
+        fill.style.width = Math.max(1.5, r.share * 100) + "%";
+        track.appendChild(fill);
+        w.appendChild(track);
+        shares.appendChild(w);
+      }
+      p.appendChild(shares);
+
+      const rows = d.rows.map((r) => {
+        const tr = el("tr");
+        tr.appendChild(el("td", null, window.petLabel(r.intent)));
+        tr.appendChild(el("td", "num", String(r.count)));
+        tr.appendChild(el("td", "num", thousands(r.input_tokens)));
+        tr.appendChild(el("td", "num", thousands(r.output_tokens)));
+        tr.appendChild(el("td", "num", String(r.estimated_or_missing_calls || 0)));
+        tr.appendChild(el("td", "num", thousands(r.tokens)));
+        tr.appendChild(el("td", "num", thousands(r.avg_tokens)));
+        tr.appendChild(el("td", "num", pct(r.share)));
+        return tr;
+      });
+      p.appendChild(el("p", "lede", "Provider usage is preferred. When unavailable, estimates use four characters per token; estimated and missing calls are flagged in the table."));
+      p.appendChild(el("div", "subhead", "Details"));
+      p.appendChild(table(["Intent", "Requests", "Input tokens", "Output tokens", "Estimated / missing calls", "Total tokens", "Tokens per request", "Share"], rows));
+
+      const most = d.rows.reduce((a, b) => (b.avg_tokens > a.avg_tokens ? b : a), d.rows[0]);
+      const read = el("div", "read");
+      read.innerHTML = readNoteHtml(d.read_note,
+        "<b>" + window.petLabel(top.intent) + "</b> accounts for <b>" + pct(top.share)
+        + "</b> of total tokens. Highest average usage: <b>" + window.petLabel(most.intent)
+        + " " + thousands(most.avg_tokens) + "</b> tokens per request. Higher averages may reflect multiple model calls."
+        + "Inspect traces to understand the calls behind each request.");
+      p.appendChild(read);
+      return p;
+    }
+
+
+    function trendPanel(d) {
+      const p = el('div', 'panel');
+      panelHead(p, 'Evaluation trend', null, 'Updated automatically from fully completed RAG evaluations. Each fresh run contributes one result; Continue updates that same run. Interrupted runs and runs with missing scores are excluded.');
+      if (!d.present) {
+        p.appendChild(missingBox(d.hint));
+        if(d.partial_runs?.length) p.appendChild(el('p','lede',d.partial_runs.length+' partial run(s) are safely saved in history and excluded from this trend. Continue retrieval evaluation to fill missing scores.'));
+        const link=el('a','btn sm','Open retrieval evaluation');link.href='/rag-eval';p.appendChild(link);return p;
+      }
+      const runs = d.runs, latest = runs[0];
+      const previous = runs[1]?.comparison_key === latest.comparison_key ? runs[1] : null;
+      p.appendChild(kpis([
+        {label:'Completed runs',val:String(runs.length),sub:'Ten most recent completed runs'},
+        {label:'Latest MRR',val:fmt3(latest.metrics.mrr),sub:'Hybrid + Rerank'},
+        {label:'Faithfulness',val:fmt3(latest.metrics.faithfulness),sub:'All answerable questions scored'},
+        {label:'Out-of-scope refusal',val:fmt3(latest.metrics.refusal_rate),sub:'All unsupported questions scored'},
+      ]));
+      if (runs[1] && !previous) p.appendChild(el('p','lede','Models, questions, or metric definitions differ between these runs; no change comparison is shown.'));
+      const rows = runs.map((run, i) => {
+        const tr = el('tr');
+        tr.append(el('td',null,run.id.slice(0,8)), el('td',null,fmtTime(run.created_at)), el('td','num',String(run.dataset_size)));
+        const older = runs[i+1]?.comparison_key === run.comparison_key ? runs[i+1] : null;
+        for (const name of d.metric_names) {
+          const v = run.metrics[name], old = older?.metrics[name];
+          const delta = old == null || v == null ? null : v-old;
+          const arrow = delta == null ? '' : Math.abs(delta)<DELTA_EPS ? ' →' : delta>0 ? ' ↑' : ' ↓';
+          tr.appendChild(el('td','num',fmt3(v)+arrow));
+        }
+        return tr;
+      });
+      p.appendChild(table(['Run','Completed','Questions'].concat(d.metric_names.map(n=>METRIC_LABEL[n])),rows));
+      const link = el('a','btn sm','Open retrieval evaluation');link.href='/rag-eval';p.appendChild(link);
+      return p;
+    }
+
+
+    function scanChart(svg, scan, pick, inUse) {
+      const W = 720, H = 300, M = { l: 42, r: 14, t: 16, b: 46 };
+      const plotW = W - M.l - M.r, plotH = H - M.t - M.b, y0 = M.t + plotH;
+      const xs = (t) => M.l + ((t - 0.05) / 0.9) * plotW;
+      const ys = (v) => y0 - v * plotH;
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      const grid = svgEl("g", { class: "grid" });
+      for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+        grid.appendChild(svgEl("line", { x1: M.l, y1: ys(t), x2: M.l + plotW, y2: ys(t) }));
+        svg.appendChild(svgEl("text", { x: M.l - 8, y: ys(t) + 3.5, "text-anchor": "end", class: "axis" }, t.toFixed(2)));
+      }
+      svg.insertBefore(grid, svg.firstChild);
+      svg.appendChild(svgEl("line", { x1: M.l, y1: y0, x2: M.l + plotW, y2: y0, class: "base" }));
+      for (const t of [0.05, 0.2, 0.4, 0.6, 0.8, 0.95]) {
+        svg.appendChild(svgEl("text", { x: xs(t), y: y0 + 20, "text-anchor": "middle", class: "axis" }, t.toFixed(2)));
+      }
+      svg.appendChild(svgEl("text", { x: M.l + plotW / 2, y: y0 + 38, "text-anchor": "middle", class: "glabel" }, "Threshold t"));
+      const line = (key, color) => {
+        const pts = scan.map((r) => xs(r.t).toFixed(1) + "," + ys(r[key]).toFixed(1)).join(" ");
+        svg.appendChild(svgEl("polyline", { points: pts, class: "ln", stroke: color }));
+      };
+      line("pass_rate", "var(--online)");
+      line("leak_rate", "var(--error)");
+      if (inUse !== null && inUse !== undefined && inUse !== pick) {
+        svg.appendChild(svgEl("line", { x1: xs(inUse), y1: M.t, x2: xs(inUse), y2: y0, class: "inuse" }));
+      }
+      if (pick !== null && pick !== undefined) {
+        svg.appendChild(svgEl("line", { x1: xs(pick), y1: M.t, x2: xs(pick), y2: y0, class: "pick" }));
+        svg.appendChild(svgEl("text", { x: xs(pick) + 6, y: M.t + 12, class: "glabel" }, "Selected " + pick.toFixed(2)));
+      }
+    }
+
+    function calibrationPanel(d) {
+      const p = el("div", "panel");
+      panelHead(p, "Confidence threshold calibration", ["Run the evaluation set", "info"],
+        "Compare evidence confidence for answerable and unsupported questions. "
+        + "Scan candidate thresholds to assess coverage and unsupported answers.");
+      const w = d.weights;
+      const wnote = el("div", "note");
+      wnote.appendChild(el("h3", null, "How confidence is calculated"));
+      wnote.appendChild(el("p", null,
+        "Weighted score: top rerank score × " + w.top1 + " + valid evidence count × " + w.valid_count
+        + " + top-two score margin × " + w.margin + " + key-clause match × " + w.key_clause
+        + ". Weights are fixed in code; calibration selects the gate threshold."));
+      if (!d.present) {
+        p.appendChild(missingBox(d.hint));
+        p.appendChild(wnote);
+        jobFoot(p, d);
+        return p;
+      }
+      const rec = d.recommended, dist = d.distribution;
+      const ius = d.in_use_stats;  // Pass rates at the active threshold
+      const syncSub = d.in_sync === "match" ? "Matches recommendation"
+        : d.in_sync === "conservative" ? "Above recommendation: more conservative, with fewer unsupported passes"
+        : "Below recommendation, unsupported questions may pass,Update with app/config.py";
+      const showPass = ius ? ius.pass_rate : rec.pass_rate;
+      const showLeak = ius ? ius.leak_rate : rec.leak_rate;
+      const atLabel = ius ? "(Active threshold " + Number(d.in_use).toFixed(2) + " below)" : "";
+      p.appendChild(kpis([
+        { label: "Recommended threshold", val: rec.threshold.toFixed(2), sub: "Youden J " + fmt3(rec.youden_j) + " · The threshold separating the two groups most clearly" },
+        { label: "Active threshold", val: Number(d.in_use).toFixed(2), sub: syncSub },
+        { label: "Answerable pass rate", val: pct(showPass), sub: "Fraction of answerable questions passing the evidence gate" + atLabel },
+        { label: "Unsupported pass rate", val: pct(showLeak), sub: "Fraction of unsupported questions incorrectly answered" + atLabel },
+      ]));
+
+      const drows = [["Answerable(A/B/C/E bucket)", dist.answerable],
+                     ["Should refuse(D bucket)", dist.absent]].map(([name, s]) => {
+        const tr = el("tr");
+        tr.appendChild(el("td", null, name));
+        for (const k of ["n", "min", "p25", "p50", "p75", "max"]) {
+          tr.appendChild(el("td", "num", k === "n" ? String(s.n) : fmt3(s[k])));
+        }
+        return tr;
+      });
+      p.appendChild(el("div", "subhead", "Evidence confidence distribution"));
+      p.appendChild(table(["Question type", "Question count", "Lowest", "p25", "Median", "p75", "Highest"], drows));
+
+      const sub = el("div", "subhead", "Threshold scan");
+      sub.appendChild(el("span", "unit", "0.05 → 0.95,Step 0.01"));
+      p.appendChild(sub);
+      const lg = el("div", "legend");
+      for (const [label, color] of [["Answerable pass rate", "var(--online)"], ["Unsupported pass rate", "var(--error)"],
+                                    ["Selected threshold", "var(--ink)"], ["Active threshold", "var(--violet)"]]) {
+        const s = el("span", "lg");
+        const i = el("i");
+        i.style.background = color;
+        s.appendChild(i);
+        s.appendChild(document.createTextNode(label));
+        lg.appendChild(s);
+      }
+      p.appendChild(lg);
+      const scroll = el("div", "chart-scroll");
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("class", "chart");
+      svg.setAttribute("viewBox", "0 0 720 300");
+      scroll.appendChild(svg);
+      p.appendChild(scroll);
+      scanChart(svg, d.scan, rec.threshold, d.in_use);
+
+      const read = el("div", "read");
+      let fallback;
+      if (d.in_sync === "match") {
+        fallback = "Threshold at <b>" + rec.threshold.toFixed(2)
+          + "</b>, unsupported pass rate <b>" + pct(rec.leak_rate) + "</b>, answerable pass rate <b>"
+          + pct(rec.pass_rate) + "</b>. False refusals enter the review queue. "
+          + "Review these cases to assess the tradeoff.";
+      } else if (d.in_sync === "conservative" && ius) {
+        fallback = "Recommended threshold <b>" + rec.threshold.toFixed(2)
+          + "</b> (unsupported pass rate " + pct(rec.leak_rate) + ", answerable pass rate " + pct(rec.pass_rate)
+          + "). That threshold still passed unsupported questions. Active threshold: <b>" + Number(d.in_use).toFixed(2)
+          + "</b>, unsupported pass rate reduced to <b>" + pct(ius.leak_rate) + "</b>, answerable pass rate <b>"
+          + pct(ius.pass_rate) + "</b>. Tradeoff: <b>" + pct(1 - ius.pass_rate)
+          + "</b> false refusals. These cases can be reviewed to improve coverage.";
+      } else {
+        fallback = "Active threshold <b>" + Number(d.in_use).toFixed(2)
+          + "</b> Below recommendation <b>" + rec.threshold.toFixed(2)
+          + "</b>, unsupported questions may pass,Consider using the recommended threshold.";
+      }
+      read.innerHTML = readNoteHtml(d.read_note, fallback);
+      p.appendChild(read);
+
+      const split = el("div", "split");
+      split.style.marginTop = "14px";
+      split.appendChild(wnote);
+      const n2 = el("div", "note");
+      n2.appendChild(el("h3", null, "What is a false refusal?"));
+      n2.appendChild(el("p", null,
+        "A false refusal happens when the knowledge base has an answer but the retrieved evidence falls below the confidence threshold. "
+        + "For example, a question about machine-washing a pet bed may retrieve incomplete cleaning instructions. "
+        + "The unanswered question enters the review queue, where a verified answer can improve future retrieval."));
+      split.appendChild(n2);
+      p.appendChild(split);
+      jobFoot(p, d);
+      return p;
+    }
+
+    function humanReference() {
+      const human = el('div', 'labor-reference');
+      human.textContent = 'U.S. human support estimate: $20–$35/hour, or roughly $2–$6 per 5–10 minute conversation.';
+      return human;
+    }
+
+    function benchmarkPanel(d, job, continueJob) {
+      const p = el("div", "panel");
+      p.appendChild(el("h2", null, "Agent evaluation: response time and token usage"));
+      const controls = () => {
+        p.appendChild(el("p", "lede", "Run 12 English support scenarios with three messages each, repeated three times. This creates test conversations and uses model API credits. Results update automatically when the run finishes. Rerun starts a new test. Continue reuses completed conversations and recovers pending requests. A conversation with a confirmed failed generation restarts separately to avoid mixing corrupted state."));
+        const jobs = [job, continueJob].filter(Boolean), busy = jobs.some(j=>j.status==='running');
+        p.appendChild(jobRow(jobs.map(j=>({...j,
+          actionLabel:j.name==='bench-agent-continue'?'Continue agent evaluation':'Rerun agent evaluation',
+          runningLabel:'Evaluating…', hideIdleStop:true,
+          disabledReason:busy && j.status!=='running'?'An Agent evaluation is running':j.resume_available===false?'No resumable run yet. Rerun once to start saving progress.':'',
+          confirmationMessage:j.name==='bench-agent-continue'
+            ?'Continue the latest Agent run? Completed conversations are reused. Confirmed failed conversations restart individually and may repeat their earlier turns.'
+            :'Start a new Agent run? Synthetic conversations and store documents will be sent to the configured judge. Model and judge calls use provider credits; previous results are retained.'})),load));
+        if(continueJob?.resume_available===false) p.appendChild(el('p','lede','Older Agent reports were saved without resume credentials. Rerun once to create a resumable run; its progress will then be kept automatically.'));
+      };
+      if (!d || d.stale) {
+        p.appendChild(missingBox(d ? "Your business or evaluation scenarios have changed. Run a new evaluation to see current results." : "No Agent evaluation results yet."));
+        p.appendChild(window.agentCostEditor({},d?.meta?.model));
+        p.appendChild(humanReference());
+        controls(); return p;
+      }
+      const a = d.summary, seconds = v => v == null ? "—" : (v / 1000).toFixed(2) + " seconds";
+      p.appendChild(el("p", "lede", a.attempted_sessions + " synthetic conversations and " + a.attempted_turns
+        + " attempted messages. Synthetic test traces are tagged separately in Langfuse, when enabled; local token records are collected independently. These timings measure completed responses; they do not measure whether a customer's issue was resolved."));
+      const finished = d.meta.finished_at || d.meta.started_at;
+      if (finished) p.appendChild(el("p", "lede", "Last evaluated: " + fmtTime(finished)));
+      if (d.cohort_provenance) p.appendChild(el("p", "lede", "These results combine an initial run with recovery reruns."));
+      const tokenSamples = a.token_complete_sessions ?? a.usage_complete_sessions ?? 0;
+      const tokens = value => value == null ? "Not available"
+        : new Intl.NumberFormat('en-US', {maximumFractionDigits:1}).format(value) + " tokens";
+      const rows = [
+        ["Responses with measured latency", a.successful_turn_latency_ms.n + " messages"],
+        ["Average response time", seconds(a.successful_turn_latency_ms.mean)],
+        ["Response time, P50 / P95", seconds(a.successful_turn_latency_ms.p50) + " / " + seconds(a.successful_turn_latency_ms.p95)],
+        ["Average time to first response text", seconds(a.ttft_ms.mean)],
+        ["Request errors (including state rejections)", (100 * a.error_rate).toFixed(1) + "%"],
+        ["Average input tokens per three-turn conversation", tokens(a.session_input_tokens?.mean)],
+        ["Average output tokens per three-turn conversation", tokens(a.session_output_tokens?.mean)],
+        ["Three-turn conversations included in token averages", tokenSamples],
+      ];
+      const table = el("table", "tbl");
+      for (const [label, value] of rows) {
+        const tr = el("tr"); tr.appendChild(el("th", null, label)); tr.appendChild(el("td", "num", String(value))); table.appendChild(tr);
+      }
+      p.appendChild(table);
+      const judge = d.judge;
+      p.appendChild(el("h3", null, "Conversation quality · LLM judge"));
+      if (!judge) {
+        p.appendChild(el("p", "lede", "No judge results for this run. Run a new Agent evaluation to assess conversation quality."));
+      } else {
+        const rate = judge.pass_rate == null ? "Not available" : (judge.pass_rate * 100).toFixed(1) + "%";
+        p.appendChild(el("p", "lede", `Judge: ${judge.model || "Not recorded"} · Pass rate: ${rate} (${judge.pass} passed of ${judge.assessed} assessed) · ${judge.uncertain} uncertain · ${judge.failed_calls} judge calls failed · ${judge.judged} of ${judge.planned} planned conversations judged.`));
+        p.appendChild(el("p", "lede", judge.scope + " This is model-based evaluation, not a human-reviewed resolution rate. Continue retries failed judge calls. Judge calls use additional provider credits and are not included in the Agent token averages below."));
+        const details = document.createElement("details");
+        const heading = document.createElement("summary");
+        heading.textContent = "View individual judgments";
+        details.appendChild(heading);
+        for (const item of judge.cases || []) {
+          const block = document.createElement("details");
+          const title = document.createElement("summary");
+          title.textContent = `${item.scenario} · repeat ${Number(item.repeat) + 1} · ${item.overall || item.status}`;
+          block.appendChild(title);
+          if (item.error) block.appendChild(el("p", "lede", `Judge call failed: ${item.error}`));
+          for (const [name, result] of Object.entries(item.dimensions || {})) {
+            block.appendChild(el("p", "lede", `${name}: ${result.verdict} — ${result.reason}`));
+          }
+          for (const turn of item.turns || []) {
+            block.appendChild(el("p", "lede", `Turn ${turn.turn} · Customer: ${turn.prompt || ""}`));
+            block.appendChild(el("p", "lede", `Assistant: ${turn.answer || ""}`));
+            if ((turn.tools || []).length) block.appendChild(el("p", "lede", `Observed tool names: ${turn.tools.join(", ")}`));
+            if ((turn.actions || []).length) block.appendChild(el("p", "lede", `Proposed actions: ${JSON.stringify(turn.actions)}`));
+          }
+          details.appendChild(block);
+        }
+        p.appendChild(details);
+      }
+      p.appendChild(el("p", "lede", "Input and output tokens are counted separately and summed across model calls in each completed three-turn conversation. Averages include only conversations with complete provider-reported usage from local records (or previously recorded Langfuse traces); estimates and missing usage are excluded."));
+      if (!tokenSamples) p.appendChild(el("p", "lede", "No complete provider-reported usage records are available for completed three-turn conversations. Token averages are unavailable."));
+      p.appendChild(window.agentCostEditor(a, d.meta?.model));
+      p.appendChild(humanReference());
+      controls();
+      return p;
+    }
+
+    async function load() {
+      const body = $("body");
+      try {
+        const d = await api("/api/observability/overview");
+        body.innerHTML = "";
+        body.appendChild(benchmarkPanel(d.agent_benchmark, d.agent_job, d.agent_continue_job));
+        body.appendChild(costPanel(d.cost));
+        body.appendChild(trendPanel(d.trend));
+        body.appendChild(calibrationPanel(d.calibration));
+      } catch (e) {
+        body.innerHTML = "";
+        body.appendChild(missingBox("Could not load data: " + e.message));
+        toast("Could not load data: " + e.message, true);
+      }
+    }
+
+    $("refreshBtn").onclick = load;
+    mountAdminNav("/observability");
+    load();
+  </script>
+</body>
+</html>

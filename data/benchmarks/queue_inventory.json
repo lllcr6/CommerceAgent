@@ -1,0 +1,29 @@
+{
+  "scope": "read-only inventory; no queue states changed",
+  "entries": [
+    {
+      "conversation_id": 67,
+      "state": "queued",
+      "assigned": false,
+      "benchmark_account": "bench_91ebefa31f7b"
+    },
+    {
+      "conversation_id": 101,
+      "state": "queued",
+      "assigned": false,
+      "benchmark_account": "bench_0434bf8ff98a"
+    },
+    {
+      "conversation_id": 113,
+      "state": "queued",
+      "assigned": false,
+      "benchmark_account": "bench_0434bf8ff98a"
+    },
+    {
+      "conversation_id": 125,
+      "state": "queued",
+      "assigned": false,
+      "benchmark_account": "bench_0434bf8ff98a"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 92 62" role="img" aria-label="Pixel dog and cat paws leaning apart">
+<title>Paw &amp; Hearth</title>
+<g transform="rotate(-14 24 32)" shape-rendering="crispEdges">
+<path fill="#67483e" d="M4 17h7v3h3v7h-3v3H4v-3H1v-7h3zM15 8h7v3h3v9h-3v3h-7v-3h-3v-9h3zM28 8h7v3h3v9h-3v3h-7v-3h-3v-9h3zM39 17h7v3h3v7h-3v3h-7v-3h-3v-7h3zM16 28h17v4h5v5h5v12h-5v4h-9v-3h-9v3h-9v-4H6V37h5v-5h5z"/>
+<path fill="#d7a173" d="M5 21h5v5H5zM16 12h5v7h-5zM29 12h5v7h-5zM40 21h5v5h-5zM17 33h15v4h5v11h-9v-3h-7v3h-9V37h5z"/>
+<path fill="#f2c99f" d="M18 34h11v4H18zM13 39h5v5h-5zM17 13h2v3h-2zM30 13h2v3h-2z"/>
+</g>
+<g transform="translate(46 2) rotate(14 23 32)" shape-rendering="crispEdges">
+<path fill="#70506b" d="M2 19h6v3h3v6H8v3H2v-3H0v-6h2zM12 10h6v3h3v7h-3v3h-6v-3H9v-7h3zM25 10h6v3h3v7h-3v3h-6v-3h-3v-7h3zM36 19h6v3h3v6h-3v3h-6v-3h-3v-6h3zM15 29h15v4h5v5h4v11h-4v4h-8v-3h-9v3h-8v-4H6V38h4v-5h5z"/>
+<path fill="#e1a6c0" d="M3 23h4v4H3zM13 14h4v6h-4zM26 14h4v6h-4zM37 23h4v4h-4zM16 34h13v4h5v10h-8v-3h-7v3h-8V38h5z"/>
+<path fill="#f8d8e5" d="M17 35h9v4h-9zM12 40h5v4h-5zM14 15h2v3h-2zM27 15h2v3h-2z"/>
+</g>
+</svg>

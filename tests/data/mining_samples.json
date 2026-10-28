@@ -1,0 +1,10 @@
+[
+  {
+    "conversation": "user: What does standard shipping cost?\nassistant: Standard shipping is free at a merchandise subtotal of $49 after discounts and rewards, before sales tax; otherwise it is $4.95 for supported destinations.",
+    "expect_question_contains": "shipping"
+  },
+  {
+    "conversation": "user: Where is order MH123?\nassistant: Its package is at a Los Angeles sorting facility. Please check the current tracking record for updates.",
+    "expect_empty": true
+  }
+]

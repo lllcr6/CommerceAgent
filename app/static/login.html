@@ -1,0 +1,12 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Paw & Hearth Sign in</title>
+<link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicon.ico">
+<link rel="icon" type="image/svg+xml" href="/static/paws.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="/static/apple-touch-icon.png">
+
+<style>body{font:16px system-ui;background:#f6f4ef;color:#292733;display:grid;place-items:center;min-height:95vh}main{background:white;padding:40px;border-radius:20px;width:320px}input,button{box-sizing:border-box;width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:8px}button{cursor:pointer;background:#fff0df}p{line-height:1.6}#error{color:#b33}</style>
+<link rel="stylesheet" href="/static/pet-theme.css"><script defer src="/static/english-ui.js"></script><main><h1>Paw & Hearth</h1><p>Sign in to contact Paw & Hearth support, or create an account to get started.</p><form id="form"><input id="username" placeholder="Account" required autocomplete="username" pattern="[a-zA-Z0-9_.-]+"><input id="password" type="password" placeholder="Password (at least 8 characters)" required minlength="8" autocomplete="current-password"><button>Sign in</button><button type="button" id="register">Create account</button></form><p id="error" role="alert"></p></main>
+<script>
+async function submit(kind){const out=document.getElementById('error');out.textContent='';try{const r=await fetch('/api/auth/'+kind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username.value,password:password.value})});const d=await r.json();if(!r.ok)throw Error(typeof d.detail==='string'?d.detail:'Check your username and password');if(kind==='register'){out.textContent='Account created. Please sign in';return}localStorage.removeItem('commerceagent_conversation_id');location.href=d.role==='admin'?'/admin':d.role==='support'?'/support':'/'}catch(e){out.textContent=e.message}}
+document.getElementById('form').onsubmit=e=>{e.preventDefault();submit('login')};document.getElementById('register').onclick=()=>{if(document.getElementById('form').reportValidity())submit('register')};
+</script></html>

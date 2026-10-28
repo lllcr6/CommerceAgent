@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paw & Hearth · Topics</title>
+  <link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/static/paws.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/static/apple-touch-icon.png">
+  <style>
+    :root {
+      --ink: #2b2632;
+      --fur: #ff9f57;
+      --coral: #ff7a59;
+      --cream: #fff6e6;
+      --paper: #fffaf0;
+      --muted: #9b8f86;
+      --error: #d6455a;
+      --online: #5fcf6a;
+      --shadow: 4px 4px 0 var(--ink);
+      --shadow-sm: 3px 3px 0 var(--ink);
+      --shadow-lg: 8px 8px 0 var(--ink);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: ui-monospace, "SF Mono", "Cascadia Mono", Consolas,
+        "PingFang SC", "Microsoft YaHei", monospace;
+      color: var(--ink);
+      background-color: #f7d9a8;
+      background-image:
+        linear-gradient(rgba(43,38,50,0.05) 2px, transparent 2px),
+        linear-gradient(90deg, rgba(43,38,50,0.05) 2px, transparent 2px);
+      background-size: 24px 24px;
+      padding: 24px 16px 64px;
+    }
+    .wrap { max-width: 1080px; margin: 0 auto; }
+
+    .topbar {
+      background: var(--cream); border: 4px solid var(--ink); box-shadow: var(--shadow-lg);
+      padding: 14px 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    }
+    .topbar h1 { font-size: 18px; margin: 0; letter-spacing: 1px; }
+    .topbar .sub { color: var(--muted); font-size: 12px; }
+    .spacer { flex: 1; }
+    .btn {
+      font: inherit; cursor: pointer; border: 3px solid var(--ink); background: var(--paper);
+      padding: 6px 14px; box-shadow: var(--shadow-sm); font-weight: 700;
+    }
+    .btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+
+
+    .stats {
+      margin-top: 16px; display: flex; gap: 14px; flex-wrap: wrap;
+    }
+    .stat {
+      background: var(--paper); border: 3px solid var(--ink); box-shadow: var(--shadow-sm);
+      padding: 10px 16px; font-size: 13px;
+    }
+    .stat b { font-size: 20px; display: block; }
+
+
+    .chart {
+      margin-top: 16px; background: var(--cream); border: 4px solid var(--ink);
+      box-shadow: var(--shadow); padding: 16px 18px;
+    }
+    .chart h2 { font-size: 14px; margin: 0 0 12px; }
+    .row { margin: 6px 0; }
+    .row summary {
+      display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none;
+    }
+    .row summary::-webkit-details-marker { display: none; }
+    .row .name { width: 6.5em; flex-shrink: 0; font-size: 13px; font-weight: 700; text-align: right; }
+
+    .row .name a { color: inherit; text-decoration: none; border-bottom: 2px solid var(--fur); }
+    .row .name a:hover { background: var(--fur); }
+    .row.zero .name a { border-bottom-color: var(--muted); }
+    .samples .all {
+      display: inline-block; margin-top: 7px; font-size: 12px; text-decoration: none;
+      color: var(--ink); border: 3px solid var(--ink); background: var(--cream);
+      padding: 2px 9px; box-shadow: 2px 2px 0 var(--ink); font-weight: 700;
+    }
+    .row .track { flex: 1; background: var(--paper); border: 2px solid var(--ink); height: 22px; position: relative; }
+    .row .bar {
+      display: block; height: 100%; background: var(--fur); border-right: 2px solid var(--ink);
+      min-width: 2px; transition: width .4s;
+    }
+    .row.zero .bar { display: none; }
+    .row.zero { opacity: .45; }
+    .row .count {
+      width: 3em; flex-shrink: 0; font-weight: 700; font-size: 13px;
+    }
+    .row.top1 .bar { background: var(--coral); }
+    .samples {
+      margin: 6px 0 10px calc(6.5em + 10px); font-size: 12.5px; color: var(--ink);
+      background: var(--paper); border: 2px dashed var(--ink); padding: 8px 12px;
+    }
+    .samples div { margin: 2px 0; }
+    .samples .none { color: var(--muted); }
+    .hint { margin-top: 10px; font-size: 12px; color: var(--muted); }
+    .err {
+      margin-top: 16px; background: var(--paper); border: 3px solid var(--error);
+      color: var(--error); padding: 10px 14px; font-size: 13px; display: none;
+    }
+  </style>
+  <link id="mh-admin-css" rel="stylesheet" href="/static/admin.css" />
+<link rel="stylesheet" href="/static/pet-theme.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Topics</h1>
+      <span class="sub">Low-confidence questions → Background classification → Most frequent categories,Knowledge gaps to prioritize</span>
+      <span class="spacer"></span>
+      <button class="btn" id="refreshBtn">Refresh</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">Classified questions<b id="total">-</b></div>
+      <div class="stat">Recently classified<b id="latest" style="font-size:14px;line-height:28px">-</b></div>
+      <div class="stat">Matched category count<b id="hitClasses">-</b></div>
+    </div>
+
+    <div class="chart">
+      <h2>17 categories · Question count(Descending,Expand row for examples,Select category name to view all)</h2>
+      <div id="rows"></div>
+      <div class="hint">Data from topic_classifications(make classify-pool Batch classification);Multi-label questions count in every matching category.</div>
+    </div>
+
+    <div class="err" id="err"></div>
+  </div>
+
+  <script src="/static/admin.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    async function load() {
+      try {
+        const r = await fetch('/api/topics/distribution');
+        const body = await r.json();
+        if (!r.ok) throw new Error(body.detail || ('HTTP ' + r.status));
+        render(body);
+        $('err').style.display = 'none';
+      } catch (e) {
+        $('err').textContent = 'Could not load distribution:' + e.message;
+        $('err').style.display = 'block';
+      }
+    }
+
+    function render(data) {
+      $('total').textContent = data.total;
+      $('latest').textContent = window.formatDateTime(data.latest);
+      const classes = [...data.classes].sort((a, b) => b.count - a.count);
+      $('hitClasses').textContent = classes.filter(c => c.count > 0).length + ' / 17';
+      const max = Math.max(1, ...classes.map(c => c.count));
+      const rows = $('rows');
+      rows.innerHTML = '';
+      classes.forEach((c, i) => {
+        const d = document.createElement('details');
+        d.className = 'row' + (c.count === 0 ? ' zero' : '') + (i === 0 && c.count > 0 ? ' top1' : '');
+        const pct = Math.round(c.count / max * 100);
+        const href = '/topics/questions?label=' + encodeURIComponent(c.label) + '&page=1';
+        d.innerHTML = `
+          <summary>
+            <span class="name">${c.count ? `<a href="${href}">${c.label}</a>` : c.label}</span>
+            <span class="track"><span class="bar" style="width:${pct}%"></span></span>
+            <span class="count">${c.count}</span>
+          </summary>
+          <div class="samples">${
+            c.samples.length
+              ? c.samples.map(s => `<div>· ${s}</div>`).join('')
+                + `<a class="all" href="${href}">View all ${c.count} items →</a>`
+              : '<div class="none">No examples</div>'
+          }</div>`;
+        rows.appendChild(d);
+      });
+    }
+
+    $('refreshBtn').onclick = load;
+    mountAdminNav('/topics');
+    load();
+  </script>
+</body>
+</html>

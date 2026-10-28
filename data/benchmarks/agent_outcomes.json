@@ -1,0 +1,22 @@
+{
+  "created_at": "2026-10-22T19:15:08.733343+00:00",
+  "scope": "Derived categories only. Raw observations remain in agent_performance.json. A keyword contract is not task-resolution accuracy.",
+  "counts": {
+    "attempts": 108,
+    "normal_done": 108
+  },
+  "handoff_tool_calls": [],
+  "confirmation_interrupts": [],
+  "handoff_followup_409_rejections": [],
+  "other_errors": [],
+  "other_error_rate": 0.0,
+  "observed_model_usage": {
+    "text-embedding-v4": {
+      "calls": 66,
+      "input_tokens": 894,
+      "output_tokens": 0,
+      "estimated_cny": 0.0004470000000000001
+    }
+  },
+  "source_report": "agent_performance.json"
+}

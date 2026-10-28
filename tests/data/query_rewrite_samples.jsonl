@@ -1,0 +1,5 @@
+{"query": "How much do I pay for postage?", "expect_any": ["shipping", "postage"]}
+{"query": "When will my package arrive?", "expect_any": ["delivery", "transit", "arrive"]}
+{"query": "Does the Pro litter box clean itself?", "expect_any": ["Pro", "litter box"]}
+{"query": "Can I return something I no longer want?", "expect_any": ["return", "refund"]}
+{"query": "My fountain broke. What can I do?", "expect_any": ["repair", "warranty", "defect"]}

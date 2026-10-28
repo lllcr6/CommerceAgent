@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Paw & Hearth · My orders</title>
+<link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicon.ico">
+<link rel="icon" type="image/svg+xml" href="/static/paws.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="/static/apple-touch-icon.png">
+<link rel="stylesheet" href="/static/support.css"><link rel="stylesheet" href="/static/tickets.css"><link rel="stylesheet" href="/static/orders.css"><link rel="stylesheet" href="/static/pet-theme.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
+<body><div class="desk ticket-desk orders-desk">
+<aside class="sessions" id="order-sidebar" aria-label="Account navigation">
+  <div class="brand"><div><strong>Paw & Hearth</strong><small>My orders</small></div><button class="drawer-close" id="nav-close" type="button" aria-label="Close navigation">✕</button></div>
+  <nav class="order-nav"><a href="/orders" aria-current="page">My orders</a><a href="/tickets">My tickets</a><a href="/">Chat support</a></nav>
+  <div class="session-lists"></div>
+  <div class="account"><div class="identity"><span class="account-avatar" id="avatar">U</span><div><small>Signed in as</small><strong id="account-name"></strong></div></div><button id="logout" type="button">Sign out</button></div>
+</aside>
+<main class="workspace">
+  <header class="chat-header"><button class="btn ticket-mobile" id="nav-open" type="button" aria-controls="order-sidebar" aria-expanded="false">☰ Menu</button><div class="heading"><h1>My orders</h1><span>Demo orders · Simulated business data</span></div><span class="spacer"></span><button class="btn" id="refresh" type="button">Refresh</button></header>
+  <div class="ticket-content"><div id="order-list"><p class="empty-note">Loading orders…</p></div><section id="order-detail" hidden></section></div>
+</main></div>
+<button class="ticket-backdrop" id="order-backdrop" type="button" aria-label="Close navigation" hidden tabindex="-1"></button>
+<dialog id="ticket-dialog" aria-labelledby="order-ticket-title"><form id="ticket-form"><div class="dialog-heading"><h2 id="order-ticket-title">Submit order ticket</h2><button class="btn" id="ticket-cancel" type="button" aria-label="Close ticket form">✕</button></div><p id="ticket-order" class="ticket-meta"></p><label>Category<select name="ticket_type"><option value="after_sales">After-sales</option><option value="complaint">Complaint</option><option value="question">Question</option></select></label><label>Description<textarea name="description" required maxlength="8000" placeholder="Describe the issue you need help with…"></textarea></label><p id="ticket-error" role="alert"></p><button class="btn primary" id="ticket-submit" type="submit">Submit ticket</button></form></dialog>
+<div id="notice" role="status" hidden></div><script type="module" src="/static/orders.js"></script></body></html>

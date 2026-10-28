@@ -1,0 +1,37 @@
+[
+  {
+    "text": "The pet fountain in order MH20260701123 arrived broken. I want a refund.",
+    "expected": {
+      "order_id": "MH20260701123",
+      "request_type": "refund"
+    }
+  },
+  {
+    "text": "I ordered the wrong collar size, order MH20260705888. Can I exchange it?",
+    "expected": {
+      "order_id": "MH20260705888",
+      "request_type": "exchange"
+    }
+  },
+  {
+    "text": "The feeder stopped dispensing after three days. I need a repair but do not have the order number.",
+    "expected": {
+      "order_id": null,
+      "request_type": "repair"
+    }
+  },
+  {
+    "text": "The driver threw the box at my door. I want to file a complaint.",
+    "expected": {
+      "order_id": null,
+      "request_type": "complaint"
+    }
+  },
+  {
+    "text": "My order arrived. How should I clean the fountain?",
+    "expected": {
+      "order_id": null,
+      "request_type": "other"
+    }
+  }
+]

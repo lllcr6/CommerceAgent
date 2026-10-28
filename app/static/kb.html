@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paw & Hearth · Knowledge base</title>
+  <link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/static/paws.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/acceptance.css" />
+  <style>
+    .form { display: grid; gap: 10px; }
+    .form .line { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .form label { font-size: 12.5px; font-weight: 700; }
+    select, input[type="text"], input[type="number"], textarea {
+      font: inherit; font-size: 13px; color: var(--ink); background: var(--paper);
+      border: 3px solid var(--ink); padding: 6px 9px;
+    }
+    textarea { width: 100%; min-height: 190px; line-height: 1.75; resize: vertical; }
+    input[type="text"] { flex: 1; min-width: 220px; }
+    .ctdesc { color: #6d6478; font-size: 11.5px; }
+    .feats { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; }
+    .ans {
+      white-space: pre-wrap; word-break: break-word; max-height: 128px; overflow: auto;
+      font-size: 12px; line-height: 1.7;
+    }
+    td.mark { white-space: nowrap; }
+    .kv { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .kv .box {
+      border: 2px solid var(--ink); background: var(--paper); padding: 4px 9px; font-size: 11.5px;
+      min-width: 84px;
+    }
+    .kv .box b { display: block; font-size: 17px; line-height: 1.4; }
+    .hits { margin-top: 12px; display: grid; gap: 10px; }
+    .hit {
+      border: 3px solid var(--ink); background: var(--paper); padding: 9px 12px; font-size: 12.5px;
+    }
+    .hit .top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .hit .q { font-weight: 700; }
+    .hit .a { margin-top: 6px; line-height: 1.75; white-space: pre-wrap; }
+    .hit .meta { margin-top: 6px; color: #6d6478; font-size: 11.5px; }
+    .hit.top1 { box-shadow: var(--shadow-sm); background: var(--cream); }
+    .workflow { font-size:13px; font-weight:600; color:var(--ink); margin:10px 0; }
+    .secondary-action { margin-top:18px; }
+    .secondary-action summary { cursor:pointer; color:var(--muted); }
+    .secondary-action .lede { margin:10px 0; }
+    .presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  </style>
+  <link id="mh-admin-css" rel="stylesheet" href="/static/admin.css" />
+<link rel="stylesheet" href="/static/pet-theme.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Knowledge base</h1>
+      <span class="sub">Add content → Make it searchable → Test an answer</span>
+      <span class="spacer"></span>
+      <button class="btn" id="refreshBtn">Refresh</button>
+    </div>
+
+    <div class="gatebar" id="gatebar"></div>
+
+    <div class="tip">
+      Add knowledge in either of two ways: <b>paste a new document below</b>, or <b>manage the bundled project documents in section 2</b>.
+      A preview shows the smaller passages used for search (chunks). Previewing does not save anything.
+      After saving, index the new passages so the assistant can find them, then try a question in section 5.
+    </div>
+
+
+    <div class="panel">
+      <h2>① Paste a new document <span class="pill info">Option A</span></h2>
+      <p class="lede">
+        Use this for a new policy, product FAQ, or support guide. Choose a type, paste the text, then preview or save it. Exact duplicates are skipped.
+      </p>
+      <div class="form">
+        <div class="line">
+          <label for="ctype">Content type</label>
+          <select id="ctype"></select>
+          <span class="ctdesc" id="ctdesc"></span>
+          <span class="spacer"></span>
+          <button class="btn sm" id="sampleBtn">Insert sample text</button>
+          <button class="btn sm" id="clearBtn">Clear text</button>
+        </div>
+        <textarea id="text" aria-label="New document text" placeholder="Paste your document here. Use # and ## headings to organize topics. For an FAQ, use each customer question as a heading."></textarea>
+        <div class="line">
+          <button class="btn go" id="previewBtn">Preview only</button>
+          <button class="btn" id="ingestBtn">Save document</button>
+          <label style="font-weight:400"><input type="checkbox" id="vecAfter" checked /> Make searchable after saving</label>
+          <span class="spacer"></span>
+          <span class="ctdesc" id="ingestHint"></span>
+        </div>
+      </div>
+      <div id="previewBox"></div>
+    </div>
+
+
+    <div class="panel">
+      <h2>② Project documents <span class="pill info" id="srcPill">—</span></h2>
+      <p class="lede">
+        These six project files supply the built-in policies and catalog. Preview a file here. For first-time setup, import them into an empty knowledge base. After editing a file on disk, apply updates to its existing sections, then index them in section 4.
+      </p>
+      <div class="scroll-x"><table class="tbl" id="srcTbl"></table></div>
+      <p class="lede" id="sourceActionHint"></p>
+      <div id="srcJobs"></div>
+      <div id="sourcePreviewBox"></div>
+    </div>
+
+    <!-- ③ Conversation drafts -->
+    <div class="panel" id="conversationKnowledge">
+      <h2>③ Find answers in support chats <span class="pill info" id="stgPill">—</span></h2>
+      <p class="lede">Turn useful answers from past conversations into draft knowledge. Check each draft for accuracy before adding it to the knowledge base.</p>
+      <p class="workflow">Find draft answers → Review each answer → Approve and make searchable</p>
+      <div class="kv" id="stgKv"></div>
+      <div id="stgJobs"></div>
+      <div style="margin-top:12px">
+        <button class="btn sm" id="stgBtn">Review draft answers</button>
+        <span class="needs">Approval saves the answer and adds it to search. Rejection keeps it out of the knowledge base.</span>
+      </div>
+      <details class="secondary-action">
+        <summary>Optional: load demo conversations</summary>
+        <p class="lede">Use sample chats to try this workflow. Loading samples preserves existing sample chats; it does not run extraction.</p>
+        <div id="seedJobs"></div>
+      </details>
+      <div id="stgBox"></div>
+    </div>
+
+    <!-- ④ Make saved updates searchable -->
+    <div class="panel" id="searchPublishing">
+      <h2>④ Make saved content searchable <span class="pill" id="dwPill">—</span></h2>
+      <p class="lede">Update the search index so the assistant can find newly saved or edited content. Only passages waiting to be indexed are processed.</p>
+      <p class="lede" id="dwDetail" role="status"></p>
+      <div class="kv" id="dwKv"></div>
+      <div id="indexJobs"></div>
+
+    </div>
+
+
+    <div class="panel">
+      <h2>⑤ Test retrieval <span class="pill info">Try a different wording</span></h2>
+      <p class="lede">
+        Enter a question to compare retrieval strategies.
+      </p>
+      <div class="form">
+        <div class="line">
+          <input type="text" id="q" placeholder="How much is shipping?" />
+          <label for="strategy">Route</label>
+          <select id="strategy">
+            <option value="vector">Dense retrieval</option>
+            <option value="bm25">BM25 Keywords</option>
+            <option value="hybrid">Hybrid retrieval</option>
+            <option value="hybrid_rerank">Hybrid + Rerank</option>
+          </select>
+          <label for="topk">Top-K</label>
+          <input type="number" id="topk" value="5" min="1" max="20" style="width:70px" />
+          <button class="btn go" id="searchBtn">Retrieval</button>
+        </div>
+        <div class="presets" id="presets"></div>
+      </div>
+      <div id="hitBox"></div>
+    </div>
+
+
+    <div class="panel">
+      <h2>⑥ Recently added</h2>
+      <p class="lede">Recent 12 items and sync status.</p>
+      <div class="scroll-x"><table class="tbl" id="recentTbl"></table></div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="/static/admin.js"></script>
+  <script src="/static/acceptance.js"></script>
+  <script>
+    const SAMPLE = `# Paw Points
+
+## Shipping and rewards
+
+Free standard shipping starts at $49 after discounts and rewards, before tax. Otherwise shipping is $4.95 per order.
+
+## Redemption
+
+| Points | Merchandise discount |
+|---|---|
+| 100 | $5 |
+| 200 | $10 |
+| 300 | $15 |
+`;
+
+    let state = null;
+    let jobSpecs = {};
+    let lastPreview = null;
+
+    const th = (row, labels) => {
+      const tr = el("tr");
+      for (const t of labels) tr.appendChild(el("th", null, t));
+      row.appendChild(tr);
+    };
+
+    function pill(cls, text) { return el("span", "pill " + cls, text); }
+
+
+    function renderGatebar(d) {
+      const bar = $("gatebar");
+      bar.textContent = "";
+      const c = d.chunks;
+      const add = (label, value, cls) => {
+        const s = el("div", "stat" + (cls ? " " + cls : ""));
+        s.appendChild(el("b", null, value === null || value === undefined ? "—" : value));
+        s.appendChild(document.createTextNode(label));
+        bar.appendChild(s);
+      };
+      add("Saved passages", c.total);
+      add("Waiting to be indexed", c.pending, c.pending ? "fail" : "pass");
+      add("Searchable passages", d.milvus.online ? d.milvus.count : "Offline", d.milvus.online ? "" : "fail");
+      add("Key clauses", c.key_clause);
+      add("Search index", d.index_health.label, d.index_health.level);
+      if (d.db_error) {
+        const s = el("div", "stat fail");
+        s.appendChild(el("b", null, "MySQL"));
+        s.appendChild(document.createTextNode(d.db_error));
+        bar.appendChild(s);
+      }
+    }
+
+
+    function renderPreview(p, target = "previewBox") {
+      if (target === "previewBox") lastPreview = p;
+      const box = $(target);
+      box.textContent = "";
+      const feats = el("div", "feats");
+      feats.appendChild(pill("info", "Source " + p.source));
+      feats.appendChild(pill("info", "Total " + p.total + " chunks / " + p.features.sections + " sections"));
+      feats.appendChild(pill(p.features.table_split ? "pass" : "missing",
+        p.features.table_split ? "Table split by rows" : "No table split needed"));
+      feats.appendChild(pill(p.features.overlap ? "pass" : "missing",
+        p.features.overlap ? "Sentence overlap applied" : "No sentence overlap needed (section under 1,200 characters)"));
+      feats.appendChild(pill(p.key_clause ? "pass" : "missing", "Key clauses " + p.key_clause + " chunks"));
+      if (p.dedup_known) {
+        feats.appendChild(pill(p.duplicates ? "fail" : "pass",
+          p.duplicates ? "Already stored: " + p.duplicates + " matching chunks" : (target === "previewBox" ? "No duplicates found" : "Preview only; nothing saved")));
+      } else {
+        feats.appendChild(pill("missing", "Deduplication unknown (MySQL unavailable)"));
+      }
+      box.appendChild(feats);
+
+      const tbl = el("table", "tbl");
+      th(tbl, ["#", "Section", "Question / heading", "Searchable passage", "Character count", "Flag"]);
+      for (const c of p.chunks) {
+        const tr = el("tr", c.duplicate ? "bad" : "");
+        tr.appendChild(el("td", "num", c.seq));
+        tr.appendChild(el("td", null, c.section_path));
+        tr.appendChild(el("td", null, c.questions));
+        const td = el("td");
+        td.appendChild(el("div", "ans", c.answer));
+        tr.appendChild(td);
+        tr.appendChild(el("td", "num", c.chars));
+        const mk = el("td", "mark");
+        if (c.is_key_clause) mk.appendChild(pill("fail", "Key clauses"));
+        if (c.is_table) mk.appendChild(pill("info", "Table chunk"));
+        if (c.duplicate) mk.appendChild(pill("missing", "Duplicate"));
+        tr.appendChild(mk);
+        tbl.appendChild(tr);
+      }
+      const sc = el("div", "scroll-x");
+      sc.style.marginTop = "12px";
+      sc.appendChild(tbl);
+      box.appendChild(sc);
+    }
+
+    async function doPreview(payload) {
+      const target = payload.file ? "sourcePreviewBox" : "previewBox";
+      $(target).textContent = "";
+      $(target).appendChild(missingBox("Chunking…"));
+      try {
+        renderPreview(await api("/api/kb/preview", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }), target);
+      } catch (e) {
+        $(target).textContent = "";
+        $(target).appendChild(missingBox("Preview failed: " + e.message));
+        toast("Preview failed: " + e.message, true);
+      }
+    }
+
+
+    function renderSources(d) {
+      $("sourceActionHint").textContent = d.chunks.total > 0
+        ? "Knowledge is already stored. Initial import will skip all files. To publish changes to existing sections, edit the project file, apply edits below, then index pending chunks in section 4."
+        : "First-time setup: preview the files, run Initial import below, then index pending chunks in section 4.";
+      const tbl = $("srcTbl");
+      tbl.textContent = "";
+      th(tbl, ["File", "Type", "characters", "rows", "Chunk count", "Key clauses", "Features", ""]);
+      let total = 0;
+      for (const s of d.sources) {
+        const tr = el("tr", s.present ? "" : "bad");
+        tr.appendChild(el("td", null, s.path));
+        tr.appendChild(el("td", null, s.content_type));
+        if (!s.present) {
+          const td = el("td", null, "File missing");
+          td.colSpan = 6;
+          tr.appendChild(td);
+          tbl.appendChild(tr);
+          continue;
+        }
+        total += s.chunks;
+        tr.appendChild(el("td", "num", s.chars));
+        tr.appendChild(el("td", "num", s.lines));
+        tr.appendChild(el("td", "num", s.chunks));
+        tr.appendChild(el("td", "num", s.key_clause));
+        const ft = el("td", "mark");
+        if (s.features.table_split) ft.appendChild(pill("info", "Split table"));
+        if (s.features.overlap) ft.appendChild(pill("info", "Overlap"));
+        ft.appendChild(pill("missing", s.features.sections + " sections"));
+        tr.appendChild(ft);
+        const act = el("td");
+        const btn = el("button", "btn sm", "Preview this file");
+        btn.addEventListener("click", () => {
+          doPreview({ file: s.file });
+          $("sourcePreviewBox").scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+        act.appendChild(btn);
+        tr.appendChild(act);
+        tbl.appendChild(tr);
+      }
+      $("srcPill").textContent = d.sources.length + " sources / total chunks " + total + " chunks";
+    }
+
+
+    function renderStaging(d) {
+      const kv = $("stgKv");
+      kv.textContent = "";
+      const s = d.staging;
+      const add = (label, value) => {
+        const b = el("div", "box");
+        b.appendChild(el("b", null, value === null || value === undefined ? "—" : value));
+        b.appendChild(document.createTextNode(label));
+        kv.appendChild(b);
+      };
+      if (!s) {
+        kv.appendChild(missingBox("Draft counts could not be loaded. Refresh after the database is available."));
+        $("stgPill").textContent = "Status unavailable";
+        return;
+      }
+      add("Ready for review", s.counts.kept);
+      add("Drafts being prepared", s.counts.extracted);
+      add("Duplicates skipped", s.counts.discarded);
+      $("stgPill").textContent = s.counts.kept ? s.counts.kept + " awaiting review"
+        : s.counts.extracted ? "Drafts being prepared" : s.total ? "No reviews waiting" : "No drafts yet";
+    }
+
+    async function loadStaging() {
+      const box = $("stgBox");
+      box.textContent = "";
+      box.appendChild(missingBox("Fetching data…"));
+      try {
+        const d = await api("/api/kb/staging");
+        box.textContent = "";
+        const LB = { kept: "Awaiting your review", extracted: "Drafts being prepared",
+                     discarded: "Duplicates skipped", approved: "Approved and searchable", rejected: "Rejected drafts" };
+        for (const st of ["kept", "extracted", "discarded", "approved", "rejected"]) {
+          const rows = d.rows[st];
+          if (!rows.length) continue;
+          const h = el("h2", null, LB[st] + " (" + rows.length + (rows.length === 1 ? " answer)" : " answers)"));
+          h.style.fontSize = "13px";
+          h.style.margin = "14px 0 6px";
+          box.appendChild(h);
+          if (st === "kept") {
+            const tip = el("div", "lede",
+              "Check that each answer is accurate, reusable, and supported by store policy. "
+              + "Reject private order details and answers that do not address the question.");
+            tip.style.margin = "0 0 8px";
+            box.appendChild(tip);
+          }
+          const tbl = el("table", "tbl");
+          th(tbl, st === "kept" ? ["Batch", "Source", "Question", "Answer", "Review action"]
+                                : ["Batch", "Source", "Question", "Answer"]);
+          for (const r of rows) {
+            const tr = el("tr");
+            tr.appendChild(el("td", null, r.batch_no));
+            tr.appendChild(el("td", null, r.source_ref || "—"));
+            tr.appendChild(el("td", null, r.question));
+            const td = el("td");
+            td.appendChild(el("div", "ans", r.answer));
+            tr.appendChild(td);
+            if (st === "kept") {
+              const act = el("td");
+              act.appendChild(mkReviewBtn("Approve and add to search", "approve", r.id));
+              act.appendChild(mkReviewBtn("Reject draft", "reject", r.id));
+              tr.appendChild(act);
+            }
+            tbl.appendChild(tr);
+          }
+          const sc = el("div", "scroll-x");
+          sc.appendChild(tbl);
+          box.appendChild(sc);
+        }
+        if (!box.childNodes.length) box.appendChild(missingBox("No draft answers yet. Choose Find draft answers to extract reusable answers from existing chats."));
+      } catch (e) {
+        box.textContent = "";
+        box.appendChild(missingBox("Could not load data: " + e.message));
+      }
+    }
+
+
+    async function mkReviewAction(kind, id, btn) {
+      const label = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Working…";
+      try {
+        const r = await api("/api/kb/staging/" + kind, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: [id] }),
+        });
+        toast(kind === "approve" ? ("Added " + r.approved + " approved answers to the knowledge base and search") : ("Rejected " + r.rejected + " drafts"));
+        await load();
+        await loadStaging();          // Refresh counters and move the reviewed draft.
+        return r;
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = label;
+        toast((kind === "approve" ? "Approval" : "Rejection") + " failed: " + e.message, true);
+      }
+    }
+
+    function mkReviewBtn(label, kind, id) {
+      const b = el("button", "btn sm", label);
+      b.style.marginRight = "6px";
+      b.onclick = () => mkReviewAction(kind, id, b);
+      return b;
+    }
+
+
+    function renderDualwrite(d) {
+      const kv = $("dwKv");
+      kv.textContent = "";
+      const add = (label, value) => {
+        const b = el("div", "box");
+        b.appendChild(el("b", null, value === null || value === undefined ? "—" : value));
+        b.appendChild(document.createTextNode(label));
+        kv.appendChild(b);
+      };
+      add("Saved passages", d.chunks.total);
+      add("Waiting to be indexed", d.chunks.pending);
+      add("Indexed passages", d.milvus.online ? d.milvus.count : "Offline");
+      const p = $("dwPill");
+      const running = d.jobs.some(j => j.name === "kb-vectorize" && j.status === "running");
+      p.className = "pill " + (running ? "info" : d.index_health.level);
+      p.textContent = running ? "Updating index…" : d.db_error ? "Status unavailable"
+        : !d.milvus.online ? "Search offline" : d.consistent ? "Nothing to index"
+        : d.chunks.pending ? "Indexing needed" : "Check search status";
+      $("dwDetail").textContent = running ? "The search index is being updated. Follow progress in the run details below."
+        : d.db_error ? "Saved-content status could not be loaded. Refresh before starting an update."
+        : !d.milvus.online ? "The search service is offline. Restore it before updating or testing answers."
+        : d.consistent ? "No content is waiting to be indexed. Try a customer question in section 5."
+        : d.chunks.pending ? d.chunks.pending + " saved passages are waiting. Choose Update search index so the assistant can find these changes."
+        : "No passages are queued, but the saved and indexed totals differ. Try a retrieval test in section 5; indexing may need maintenance.";
+
+
+    }
+
+
+    function renderHits(d) {
+      const box = $("hitBox");
+      box.textContent = "";
+      const head = el("div", "feats");
+      head.appendChild(pill("info", "Route " + d.strategy));
+      head.appendChild(pill(d.hits.length ? "pass" : "fail", "Recall " + d.hits.length + " chunks"));
+      box.appendChild(head);
+      if (!d.hits.length) {
+        box.appendChild(missingBox("Nothing retrieved. The knowledge may be missing, or pending Not indexed yet"));
+        return;
+      }
+      const list = el("div", "hits");
+      d.hits.forEach((h, i) => {
+        const card = el("div", "hit" + (i === 0 ? " top1" : ""));
+        const top = el("div", "top");
+        top.appendChild(el("span", "pill " + (i === 0 ? "pass" : "info"), "#" + (i + 1)));
+        top.appendChild(el("span", "q", h.question));
+        top.appendChild(el("span", "spacer"));
+        if (h.score !== null && h.score !== undefined) {
+          top.appendChild(pill("info", "score " + Number(h.score).toFixed(4)));
+        }
+        if (h.rerank_score !== null && h.rerank_score !== undefined) {
+          top.appendChild(pill("info", "rerank " + Number(h.rerank_score).toFixed(4)));
+        }
+        card.appendChild(top);
+        card.appendChild(el("div", "a", h.answer));
+        card.appendChild(el("div", "meta",
+          [h.section_path || "—", h.content_type || "—", "id " + (h.id ?? "—")].join("　·　")));
+        list.appendChild(card);
+      });
+      box.appendChild(list);
+    }
+
+    async function doSearch() {
+      const q = $("q").value.trim() || $("q").placeholder;
+      $("hitBox").textContent = "";
+      $("hitBox").appendChild(missingBox("Searching…"));
+      try {
+        renderHits(await api("/api/kb/search", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ q, strategy: $("strategy").value, top_k: Number($("topk").value) }),
+        }));
+      } catch (e) {
+        $("hitBox").textContent = "";
+        $("hitBox").appendChild(missingBox("Retrieval failed: " + e.message));
+        toast("Retrieval failed: " + e.message, true);
+      }
+    }
+
+
+    function renderRecent(d) {
+      const tbl = $("recentTbl");
+      tbl.textContent = "";
+      th(tbl, ["id", "Type", "sections", "Question", "Content (truncated)", "Status"]);
+      if (!d.recent.length) {
+        const tr = el("tr");
+        const td = el("td", null, "No chunks yet. Add a document above or build the knowledge base.");
+        td.colSpan = 6;
+        tr.appendChild(td);
+        tbl.appendChild(tr);
+        return;
+      }
+      for (const r of d.recent) {
+        const tr = el("tr", r.status === "pending" ? "bad" : "");
+        tr.appendChild(el("td", "num", r.id));
+        tr.appendChild(el("td", null, r.content_type || "—"));
+        tr.appendChild(el("td", null, r.section_path || "—"));
+        tr.appendChild(el("td", null, r.questions));
+        const td = el("td");
+        td.appendChild(el("div", "ans", r.answer));
+        tr.appendChild(td);
+        const st = el("td", "mark");
+        st.appendChild(pill(r.status === "done" ? "pass" : "fail",
+          r.status === "done" ? "Indexed" : "Waiting to be indexed"));
+        if (r.is_key_clause) st.appendChild(pill("fail", "Key clauses"));
+        tr.appendChild(st);
+        tbl.appendChild(tr);
+      }
+    }
+
+
+    function renderJobs(d) {
+      const labels = {"kb-build": "Initial import (empty knowledge base)", "kb-repatch": "Apply edits to existing sections", "kb-mine": "Find draft answers",
+        "seed-conv": "Load demo chats", "kb-vectorize": "Update search index"};
+      const hasDocuments = d.content_types.some(c => (d.chunks.by_content_type?.[c.key] || 0) > 0);
+      jobSpecs = Object.fromEntries(d.jobs.map((j) => [j.name, {...j, actionLabel: labels[j.name],
+        disabledReason: j.name === "kb-build" && hasDocuments ? "Document content is already stored. Use Apply edits for existing sections or paste new content in section 1." : null}]));
+      const overrides = {
+        "kb-mine": {runningLabel: "Finding draft answers…", stopLabel: "Stop extraction",
+          confirmationMessage: "Extract draft answers from existing support conversations? This calls the configured model and may take several minutes. Drafts require your approval before they are published."},
+        "seed-conv": {runningLabel: "Loading demo chats…"},
+        "kb-vectorize": {runningLabel: "Updating index…", stopLabel: "Stop indexing",
+          disabledReason: d.db_error ? "Saved-content status is unavailable." : !d.milvus.online ? "Restore the search service first."
+            : !d.chunks.pending ? "No saved content is waiting to be indexed." : null}
+      };
+      for (const [name, spec] of Object.entries(jobSpecs)) Object.assign(spec, {hideIdleStop:true}, overrides[name] || {});
+      const pick = (names) => names.map((n) => jobSpecs[n]).filter(Boolean);
+      const put = (id, names, note) => {
+        const host = $(id);
+        host.textContent = "";
+        host.appendChild(jobRow(pick(names), load, note));
+      };
+      put("srcJobs", ["kb-build", "kb-repatch"],
+        "Initial import skips all files if document content is already stored. Apply edits updates existing sections only; paste new sections in section 1. Stored passages without a matching file section are kept unchanged. After an update, index pending chunks in section 4.");
+      put("stgJobs", ["kb-mine"], "AI prepares drafts for your review. This may take a few minutes.");
+      put("seedJobs", ["seed-conv"], "Optional sample data for trying extraction.");
+      put("indexJobs", ["kb-vectorize"], "Already indexed passages are skipped. Updates may take a few minutes.");
+    }
+
+    async function load() {
+      try {
+        const d = await api("/api/kb/overview");
+        state = d;
+        renderGatebar(d);
+        renderSources(d);
+        renderStaging(d);
+        renderDualwrite(d);
+        renderRecent(d);
+        renderJobs(d);
+        if (!$("ctype").options.length) {
+          for (const c of d.content_types) {
+            const o = document.createElement("option");
+            o.value = c.key;
+            o.textContent = ({faq: "Product FAQ", policy: "Store policy", manual: "Support guide", spec: "Product specifications"})[c.key] || c.key;
+            o.dataset.desc = c.desc;
+            $("ctype").appendChild(o);
+          }
+          syncCtDesc();
+        }
+      } catch (e) {
+        toast("Could not load data: " + e.message, true);
+      }
+    }
+
+    function syncCtDesc() {
+      const o = $("ctype").selectedOptions[0];
+      $("ctdesc").textContent = o ? o.dataset.desc : "";
+    }
+
+
+    mountAdminNav("/kb");
+    $("refreshBtn").addEventListener("click", load);
+    $("ctype").addEventListener("change", syncCtDesc);
+    $("sampleBtn").addEventListener("click", () => { $("text").value = SAMPLE; });
+    $("clearBtn").addEventListener("click", () => { $("text").value = ""; $("previewBox").textContent = ""; });
+    $("previewBtn").addEventListener("click", () =>
+      doPreview({ text: $("text").value, content_type: $("ctype").value }));
+    $("stgBtn").addEventListener("click", loadStaging);
+    $("searchBtn").addEventListener("click", doSearch);
+    $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+    for (const q of ["How much is shipping?", "How much is shipping?", "When will it ship?", "Can I return expired cat food?"]) {
+      const b = el("button", "btn sm", q);
+      b.addEventListener("click", () => { $("q").value = q; doSearch(); });
+      $("presets").appendChild(b);
+    }
+
+    $("ingestBtn").addEventListener("click", async () => {
+      const text = $("text").value.trim();
+      if (!text) { toast("Paste document text first", true); return; }
+      const n = lastPreview && lastPreview.source === "Manual entry" ? lastPreview.total : null;
+      if (!confirm("Save this content to the knowledge base?"
+        + (n ? "\nPreview generated " + n + " chunks" + (lastPreview.duplicates ? "，including " + lastPreview.duplicates + " Existing chunks are skipped" : "") : "")
+        + ($("vecAfter").checked ? "\nIndex immediately after saving (calls embedding provider)" : "\nSave only pending，Index later"))) return;
+      const btn = $("ingestBtn");
+      btn.disabled = true;
+      $("ingestHint").textContent = "Saving…";
+      try {
+        const d = await api("/api/kb/ingest", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, content_type: $("ctype").value, vectorize: $("vecAfter").checked }),
+        });
+        $("ingestHint").textContent = "";
+        toast("Save to knowledge base " + d.inserted + " chunks"
+          + (d.skipped ? "，Skip duplicates " + d.skipped + " chunks" : "")
+          + (d.vectorized !== null ? "，Index " + d.vectorized + " chunks" : "（not indexed)"));
+        await load();
+        if (d.inserted) doPreview({ text, content_type: $("ctype").value });
+      } catch (e) {
+        $("ingestHint").textContent = "";
+        toast("Could not save: " + e.message, true);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+
+    load();
+  </script>
+</body>
+</html>

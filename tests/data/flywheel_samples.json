@@ -1,0 +1,133 @@
+[
+  {
+    "raw_question": "The dog bed seam tore after two uses. Can I return the defective bed?",
+    "candidates": [],
+    "expect_match": null,
+    "expect_keywords": [
+      "defect",
+      "return"
+    ]
+  },
+  {
+    "raw_question": "Can I wash the pet bed?",
+    "candidates": [
+      {
+        "id": 1,
+        "normalized_question": "Is the pet bed machine washable?"
+      }
+    ],
+    "expect_match": 1,
+    "expect_keywords": []
+  },
+  {
+    "raw_question": "How do I clean a dirty pet bed without damaging it?",
+    "candidates": [
+      {
+        "id": 1,
+        "normalized_question": "Is the pet bed machine washable?"
+      }
+    ],
+    "expect_match": 1,
+    "expect_keywords": []
+  },
+  {
+    "raw_question": "What colors does the pet bed come in?",
+    "candidates": [
+      {
+        "id": 1,
+        "normalized_question": "Is the pet bed machine washable?"
+      }
+    ],
+    "expect_match": null,
+    "expect_keywords": [
+      "color"
+    ]
+  },
+  {
+    "raw_question": "How long is the feeder warranty?",
+    "candidates": [
+      {
+        "id": 3,
+        "normalized_question": "What is the warranty period for the feeder?"
+      }
+    ],
+    "expect_match": 3,
+    "expect_keywords": []
+  },
+  {
+    "raw_question": "What does a feeder repair cost?",
+    "candidates": [
+      {
+        "id": 3,
+        "normalized_question": "What is the warranty period for the feeder?"
+      }
+    ],
+    "expect_match": null,
+    "expect_keywords": [
+      "repair",
+      "cost"
+    ]
+  },
+  {
+    "raw_question": "What is different about the Pro and Lite litter boxes?",
+    "candidates": [
+      {
+        "id": 5,
+        "normalized_question": "How do the Pro and Lite litter boxes differ?"
+      }
+    ],
+    "expect_match": 5,
+    "expect_keywords": []
+  },
+  {
+    "raw_question": "Can I return opened food?",
+    "candidates": [
+      {
+        "id": 7,
+        "normalized_question": "Can opened pet food be returned?"
+      }
+    ],
+    "expect_match": 7,
+    "expect_keywords": []
+  },
+  {
+    "raw_question": "When will my Black Friday order ship?",
+    "candidates": [
+      {
+        "id": 7,
+        "normalized_question": "Can opened pet food be returned?"
+      }
+    ],
+    "expect_match": null,
+    "expect_keywords": [
+      "ship"
+    ]
+  },
+  {
+    "raw_question": "Do I need to assemble the cat tree myself?",
+    "candidates": [],
+    "expect_match": null,
+    "expect_keywords": [
+      "assembl"
+    ]
+  },
+  {
+    "raw_question": "Support said the refund was submitted, but I still have not received it.",
+    "candidates": [
+      {
+        "id": 9,
+        "normalized_question": "How long does a refund take to arrive?"
+      }
+    ],
+    "expect_match": 9,
+    "expect_keywords": []
+  },
+  {
+    "raw_question": "What is the maximum operating temperature for this pet dryer?",
+    "candidates": [],
+    "expect_match": null,
+    "expect_keywords": [
+      "temperature"
+    ]
+  }
+]

@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paw & Hearth · Classifier evaluation</title>
+  <link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/static/paws.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/acceptance.css" />
+  <style>
+
+    .avg { display: flex; gap: 14px; flex-wrap: wrap; }
+    .avgbox { flex: 1; min-width: 260px; border: 3px solid var(--ink); background: var(--paper); padding: 10px 13px; }
+    .avgbox h3 { margin: 0 0 3px; font-size: 13px; }
+    .avgbox .way { color: var(--muted); font-size: 11.5px; }
+    .avgbox .nums { display: flex; gap: 14px; margin-top: 8px; font-size: 13px; }
+    .avgbox .nums b { font-size: 17px; display: block; font-variant-numeric: tabular-nums; }
+
+
+    .scan { display: flex; flex-direction: column; gap: 5px; }
+    .scanrow { display: flex; align-items: center; gap: 10px; font-size: 12.5px; }
+    .scanrow .t { width: 3.4em; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .scanrow .track { flex: 1; border: 2px solid var(--ink); background: var(--paper); height: 18px; }
+    .scanrow .fill { height: 100%; background: var(--fur); display: block; }
+    .scanrow.win .fill { background: var(--online); }
+    .scanrow.inuse .t::after { content: " ◀"; color: var(--coral); }
+    .scanrow .f1 { width: 4.6em; font-variant-numeric: tabular-nums; }
+    .scanrow .tag { font-size: 11.5px; color: var(--muted); }
+
+
+    .mats { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); }
+    .mat { border: 3px solid var(--ink); background: var(--paper); }
+    .mat .cap {
+      display: flex; align-items: center; gap: 6px; padding: 4px 7px;
+      border-bottom: 2px solid var(--ink); font-size: 12.5px; font-weight: 700;
+    }
+    .mat.dirty .cap { background: #ffe9ec; }
+    .mat .grid { display: grid; grid-template-columns: 1fr 1fr; }
+    .mat .c { padding: 5px 7px; font-size: 11.5px; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
+    .mat .c:nth-child(2n) { border-right: 0; }
+    .mat .c:nth-child(n+3) { border-bottom: 0; }
+    .mat .c { white-space: nowrap; }
+    .mat .c b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; }
+    .mat .c.tp b { color: #2f8f3c; }
+    .mat .c.fp b, .mat .c.fn b { color: var(--error); }
+    .mat .c.k { color: var(--muted); }
+
+
+    .tryrow { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tryrow input {
+      flex: 1; min-width: 240px; font: inherit; font-size: 13px; padding: 7px 10px;
+      border: 3px solid var(--ink); background: var(--paper);
+    }
+    .presets { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+    .sc { margin-top: 12px; display: flex; flex-direction: column; gap: 4px; }
+    .scrow { display: flex; align-items: center; gap: 9px; font-size: 12.5px; }
+    .scrow .nm { width: 5.6em; text-align: right; flex-shrink: 0; }
+    .scrow .track { flex: 1; border: 2px solid var(--ink); background: var(--paper); height: 16px; position: relative; }
+    .scrow .fill { height: 100%; background: #e6dcc9; display: block; }
+    .scrow.hit .fill { background: var(--online); }
+    .scrow.hit .nm { font-weight: 700; }
+    .scrow:not(.hit) { opacity: .62; }
+    .scrow .v { width: 4em; font-variant-numeric: tabular-nums; }
+    .scrow .line { position: absolute; top: -3px; bottom: -3px; width: 3px; background: var(--coral); }
+    .verdict { margin-top: 10px; font-size: 13px; background: var(--paper); border: 2px solid var(--ink); padding: 8px 11px; line-height: 1.75; }
+  </style>
+  <link id="mh-admin-css" rel="stylesheet" href="/static/admin.css" />
+<link rel="stylesheet" href="/static/pet-theme.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Classifier evaluation</h1>
+      <span class="sub">Per category P/R/F1 · Tolerance limits · Confusion matrix · Threshold</span>
+      <span class="spacer"></span>
+      <button class="btn" id="refreshBtn">Refresh</button>
+    </div>
+
+    <div class="gatebar" id="gatebar"></div>
+    <div id="body"><div class="panel"><div class="miss">Loading…</div></div></div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="/static/admin.js"></script>
+  <script src="/static/acceptance.js"></script>
+  <script>
+    let jobSpecs = {};
+
+    async function load() {
+      try {
+        const [d, j] = await Promise.all([
+          api("/api/acceptance/eval"),
+          api("/api/jobs"),
+        ]);
+        jobSpecs = Object.fromEntries(j.jobs.map((x) => [x.name, x]));
+        render(d);
+      } catch (e) {
+        $("body").textContent = "";
+        $("body").appendChild(missingBox("Could not load: " + e.message));
+      }
+    }
+
+    function panel(title, lede, pill) {
+      const p = el("div", "panel");
+      const h = el("h2", "", title);
+      if (pill) { const [c, t] = pill; h.appendChild(el("span", "pill " + c, t)); }
+      p.appendChild(h);
+      if (lede) p.appendChild(el("p", "lede", lede));
+      return p;
+    }
+
+    function render(d) {
+      const ev = d.eval, scan = d.scan;
+      renderGatebar(d);
+      const body = $("body");
+      body.textContent = "";
+
+      /* ① micro vs macro */
+      const pAvg = panel("Total score: micro and macro Read together",
+        "micro Aggregate——17 Aggregate scoring gives larger categories more influence."
+        + "macro Per-category——First supply 17 one score per category F1 Average categories equally, regardless of their size."
+        + "Similar scores indicate balanced performance across categories.");
+      if (!ev.present) { pAvg.appendChild(missingBox(ev.hint)); }
+      else {
+        const avg = el("div", "avg");
+        for (const [key, name, way] of [
+          ["micro", "micro", "Aggregate: all predictions counted together"],
+          ["macro", "macro", "Per-category: 17 Compute per category, then average"],
+        ]) {
+          const box = el("div", "avgbox");
+          box.appendChild(el("h3", "", name));
+          box.appendChild(el("div", "way", way));
+          const nums = el("div", "nums");
+          for (const k of ["p", "r", "f1"]) {
+            const c = el("div");
+            c.appendChild(el("b", "", ev[key][k].toFixed(3)));
+            c.appendChild(el("span", "", k.toUpperCase()));
+            nums.appendChild(c);
+          }
+          box.appendChild(nums);
+          avg.appendChild(box);
+        }
+        pAvg.appendChild(avg);
+        const gap = Math.abs(ev.micro.f1 - ev.macro.f1);
+        pAvg.appendChild(el("div", "tip",
+          "Difference " + gap.toFixed(3) + "："
+          + (gap <= 0.02 ? "Category results are balanced without hidden weak categories."
+            : "Large difference,micro High macro A low score can hide weaker categories. Inspect per-category results.")));
+      }
+      if (jobSpecs["roberta-eval"]) pAvg.appendChild(jobRow([jobSpecs["roberta-eval"]], load,
+        "Evaluation set " + (ev.present ? ev.test_size + " items" : "test.jsonl")));
+      body.appendChild(pAvg);
+
+
+      const pCls = panel("Per-category metrics and tolerances",
+        "Tolerance limits are set by severity tier:17 Categories grouped by impact on knowledge-review priorities"
+        + "Planning targets: strict F1 ≥ 0.9; standard ≥ 0.8; flexible topics have no target."
+        + "support Number of test examples for this category, matching the matrix:support = TP + FN。",
+        ev.present ? (ev.red_line_passed ? ["pass", "All tolerances passed"] : ["fail", "Some categories are below tolerance"]) : null);
+      if (!ev.present) pCls.appendChild(missingBox(ev.hint));
+      else {
+        const box = el("div", "scroll-x");
+        const t = el("table", "tbl");
+        const thead = el("thead");
+        const hr = el("tr");
+        for (const h of ["Category", "Tier", "P", "R", "F1", "support", "Tolerance"]) hr.appendChild(el("th", "", h));
+        thead.appendChild(hr); t.appendChild(thead);
+        const tb = el("tbody");
+        for (const c of ev.classes) {
+          const tr = el("tr", c.passed === false ? "bad" : "");
+          tr.appendChild(el("td", "", c.name));
+          const sev = el("td");
+          sev.appendChild(el("span", "pill sev-" + c.severity, c.severity));
+          tr.appendChild(sev);
+          tr.appendChild(scoreCell(c.p, null));
+          tr.appendChild(scoreCell(c.r, null));
+          tr.appendChild(scoreCell(c.f1, c.red_line));
+          tr.appendChild(el("td", "num", String(c.support)));
+          const rl = el("td");
+          if (c.red_line === null) rl.appendChild(el("span", "", "—"));
+          else rl.appendChild(el("span", "pill " + (c.passed ? "pass" : "fail"),
+            c.red_line + (c.passed ? " ✅" : " 🔴 Review training data")));
+          tr.appendChild(rl);
+          tb.appendChild(tr);
+        }
+        t.appendChild(tb);
+        box.appendChild(t);
+        pCls.appendChild(box);
+      }
+      body.appendChild(pCls);
+
+
+      const pScan = panel("Decision threshold: nine-candidate scan",
+        "The model assigns each question 17 one score per category 0~1 scores; only labels above the threshold are selected."
+        + "A low threshold adds false positives; a high threshold misses labels. Score the validation set once and compare nine thresholds0.30~0.70 Step 0.05）"
+        + "Compute each using the same table micro-F1，Highest score wins; ties keep the first candidate, so 0.45 Reduce 0.50。",
+        scan.present ? (scan.consistent ? ["pass", "Matches active threshold"] : ["fail", "Differs from active threshold"]) : null);
+      if (!scan.present) pScan.appendChild(missingBox(scan.hint));
+      else {
+        const lo = Math.min(...scan.scan.map((s) => s.micro_f1));
+        const hi = Math.max(...scan.scan.map((s) => s.micro_f1));
+        const wrap = el("div", "scan");
+        for (const s of scan.scan) {
+          const win = Math.abs(s.threshold - scan.best_threshold) < 1e-9;
+          const inuse = Math.abs(s.threshold - (scan.in_use_threshold ?? -1)) < 1e-9;
+          const row = el("div", "scanrow" + (win ? " win" : "") + (inuse ? " inuse" : ""));
+          row.appendChild(el("span", "t", s.threshold.toFixed(2)));
+          const track = el("span", "track");
+          const fill = el("span", "fill");
+          fill.style.width = (hi > lo ? 8 + 92 * (s.micro_f1 - lo) / (hi - lo) : 100) + "%";
+          track.appendChild(fill);
+          row.appendChild(track);
+          row.appendChild(el("span", "f1", s.micro_f1.toFixed(4)));
+          row.appendChild(el("span", "tag",
+            (win ? "Selected" : "") + (inuse ? (win ? " · threshold.json Active" : "threshold.json Active") : "")));
+          wrap.appendChild(row);
+        }
+        pScan.appendChild(wrap);
+        pScan.appendChild(el("div", "tip",
+          "Replayed winner " + scan.best_threshold.toFixed(2) + "（Validation set micro-F1 "
+          + scan.best_micro_f1.toFixed(4) + "），threshold.json Active " + scan.in_use_threshold
+          + (scan.consistent ? "，They agree ✅——The scan is reproducible."
+            : "，They differ 🔴——Re-export or rerun the scan.")
+          + " Validation set " + scan.val_size + " items; run " + fmtTime(scan.ran_at) + "。"));
+      }
+      if (jobSpecs["roberta-threshold-scan"]) pScan.appendChild(
+        jobRow([jobSpecs["roberta-threshold-scan"]], load,
+          d.classifier.online ? ":8110 Online" : ":8110 Offline. Start the service from the overview first"));
+      body.appendChild(pScan);
+
+
+      const pMat = panel("Per-category confusion matrix",
+        "P/R/F1 Scores summarize results; the confusion matrix shows mistakes——Scores summarize performance; errors show what needs improvement."
+        + "TP Correctly predicted labels,TN Correctly absent,FP False positives,FN False negatives."
+        + "The direction of errors matters as much as the count.");
+      if (!ev.present) pMat.appendChild(missingBox(ev.hint));
+      else {
+        const errs = ev.total_fp + ev.total_fn;
+        pMat.appendChild(el("div", "tip",
+          "Full table " + ev.total_cells + " binary decisions (" + ev.test_size + " items × 17 category errors " + errs
+          + " questions: false positives " + ev.total_fp + " times; false negatives " + ev.total_fn + "  times."));
+        const mats = el("div", "mats");
+        for (const c of ev.classes) {
+          const m = el("div", "mat" + (c.fp || c.fn ? " dirty" : ""));
+          const cap = el("div", "cap");
+          cap.appendChild(el("span", "", c.name));
+          cap.appendChild(el("span", "spacer"));
+          cap.appendChild(el("span", "pill sev-" + c.severity, c.severity));
+          m.appendChild(cap);
+          const g = el("div", "grid");
+          for (const [cls, key, label] of [
+            ["tn k", "tn", "TN Not expected"], ["fp", "fp", "FP False positives"],
+            ["fn", "fn", "FN False negatives"], ["tp", "tp", "TP Correct labels"],
+          ]) {
+            const cell = el("div", "c " + cls);
+            cell.appendChild(el("b", "", String(c[key])));
+            cell.appendChild(el("span", "", label));
+            g.appendChild(cell);
+          }
+          m.appendChild(g);
+          mats.appendChild(m);
+        }
+        pMat.appendChild(mats);
+        const a = el("a", "btn sm", "Inspect specific mistakes in the error-review page →");
+        a.href = "/acceptance/errors";
+        const row = el("div", "jobrow");
+        row.appendChild(a);
+        pMat.appendChild(row);
+      }
+      body.appendChild(pMat);
+
+
+      const pTry = panel("Single-question multi-label classification",
+        "17 Each label is evaluated independently against the threshold——This is how multi-label selection works."
+        + "If 17 If all scores are below threshold, use the highest-scoring label.",
+        d.classifier.online ? ["pass", ":8110 Online"] : ["missing", ":8110 Offline"]);
+      const row = el("div", "tryrow");
+      const input = el("input");
+      input.placeholder = "Enter a customer question, e.g. My dog’s harness is too big";
+      input.value = "It is too big; I would like to return it";
+      const go = el("button", "btn go", "Try classification");
+      row.appendChild(input); row.appendChild(go);
+      pTry.appendChild(row);
+      const presets = el("div", "presets");
+      for (const t of ["It is too big; I would like to return it", "What size kibble can this feeder handle?",
+        "Can rewards cover shipping, and who pays return shipping?", "Do you recycle old pet crates?"]) {
+        const b = el("button", "btn sm", t.length > 14 ? t.slice(0, 14) + "…" : t);
+        b.title = t;
+        b.addEventListener("click", () => { input.value = t; go.click(); });
+        presets.appendChild(b);
+      }
+      pTry.appendChild(presets);
+      const out = el("div");
+      pTry.appendChild(out);
+      async function tryIt() {
+        const text = input.value.trim();
+        if (!text) { toast("Enter a question first", true); return; }
+        go.disabled = true; go.textContent = "Scoring…";
+        out.textContent = "";
+        try {
+          const r = await api("/api/acceptance/classify", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+          });
+          const v = el("div", "verdict");
+          v.appendChild(el("b", "", "Matched labels: " + (r.labels.join(" + ") || "（None)")));
+          v.appendChild(el("div", "", "Decision threshold " + r.threshold
+            + (r.fallback ? "；17 No labels passed; highest-score fallback used" : "；Select every label above threshold")));
+          out.appendChild(v);
+          const sc = el("div", "sc");
+          for (const s of r.scores) {
+            const line = el("div", "scrow" + (s.hit ? " hit" : ""));
+            line.appendChild(el("span", "nm", s.label));
+            const track = el("span", "track");
+            const fill = el("span", "fill");
+            fill.style.width = Math.max(1, Math.round(s.score * 100)) + "%";
+            track.appendChild(fill);
+            const lineMark = el("span", "line");
+            lineMark.style.left = (r.threshold * 100) + "%";
+            lineMark.title = "Decision threshold " + r.threshold;
+            track.appendChild(lineMark);
+            line.appendChild(track);
+            line.appendChild(el("span", "v", s.score.toFixed(3)));
+            sc.appendChild(line);
+          }
+          out.appendChild(sc);
+        } catch (e) {
+          out.appendChild(missingBox("Classification failed: " + e.message));
+        } finally { go.disabled = false; go.textContent = "Try classification"; }
+      }
+      go.addEventListener("click", tryIt);
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") tryIt(); });
+      body.appendChild(pTry);
+      if (d.classifier.online) tryIt();
+    }
+
+    function renderGatebar(d) {
+      const bar = $("gatebar");
+      bar.textContent = "";
+      const ev = d.eval;
+      const add = (label, value, cls) => {
+        const s = el("div", "stat " + (cls || ""));
+        s.appendChild(el("span", "", label));
+        const b = el("b", "", value);
+        if (String(value).length > 6) { b.style.fontSize = "14px"; b.style.lineHeight = "2"; }
+        s.appendChild(b);
+        bar.appendChild(s);
+      };
+      if (ev.present) {
+        add("Test set", ev.test_size + " items");
+        add("Decision threshold", String(ev.threshold));
+        add("micro-F1", ev.micro.f1.toFixed(3), ev.red_line_passed ? "pass" : "");
+        add("macro-F1", ev.macro.f1.toFixed(3));
+        add("Error tolerances", ev.red_line_passed ? "All passed" : "Below-target results", ev.red_line_passed ? "pass" : "fail");
+        add("Evaluated", fmtTime(ev.ran_at));
+      } else {
+        add("Evaluation artifacts", "Not generated", "fail");
+      }
+    }
+
+    mountAdminNav("/acceptance/eval");
+    $("refreshBtn").addEventListener("click", load);
+    load();
+  </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{
+  "status": "running",
+  "meta": {
+    "started_at": "2026-10-22T19:03:53.398487+00:00",
+    "base_url": "http://127.0.0.1:8000",
+    "repeats": 3,
+    "concurrency": 6,
+    "n_scenarios": 12,
+    "language": "en-US",
+    "scenario_version": "paw-hearth-en-US-v1",
+    "business_fingerprint": "811ba3c28cc81aa994c5b859e5317836c28127e6a48b863fbc918a9bd62ac8d7",
+    "scenarios_sha256": "907919fcfa93601a13384606a1bb879a1a51eea797824ac93d68887760b92bcc",
+    "account": "bench_1fc2c8777ae8",
+    "model": "qwen3.7-flash",
+    "pricing": {
+      "currency": "CNY",
+      "checked_at": "2026-10-21",
+      "source": "https://help.aliyun.com/zh/model-studio/model-pricing",
+      "region": "cn-beijing",
+      "basis": "Public standard list prices, ignoring temporary discounts, free quota and cache discounts. Estimates, not paid invoices.",
+      "models": {
+        "qwen3.7-plus": {
+          "input_per_million": 2.0,
+          "output_per_million": 8.0,
+          "max_input_tokens": 256000
+        },
+        "text-embedding-v4": {
+          "input_per_million": 0.5,
+          "output_per_million": 0.0
+        },
+        "qwen3-rerank": {
+          "input_per_million": 0.5,
+          "output_per_million": 0.0
+        }
+      }
+    },
+    "pricing_sha256": "5a76c7eef4c2c3db5dbbc172d134162390bc15fa7568ad14b06570960102820d",
+    "latency_scope": "Actual authenticated HTTP SSE from request to first nonempty answer delta and final done/interrupt event. Stream is drained to EOF before next turn; stream_closed_ms is separate. Excludes login and human wait time.",
+    "quality_scope": "Heuristic response contracts, not human-rated task resolution.",
+    "workload": "12 synthetic scenarios, 3 turns each, balanced by scenario; not production traffic.",
+    "resume_signature": "d0bd513356efa359e724f0d4e49e13155df1b81ba129a20fe37fba80a11ea9b7",
+    "selected_scenarios": [
+      "policy_return",
+      "billing_receipt",
+      "policy_warranty",
+      "product_litter",
+      "product_water",
+      "product_feeder",
+      "orders_status",
+      "orders_product",
+      "safety_ownership",
+      "safety_out_of_scope",
+      "support_hours",
+      "chitchat"
+    ]
+  },
+  "sessions": []
+}

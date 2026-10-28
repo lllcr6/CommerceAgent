@@ -1,0 +1,109 @@
+{
+  "schema_version": "paw-topic-en-v1",
+  "task": "multi_label_topic_classification",
+  "language": "en-US",
+  "labels": [
+    {
+      "id": "returns_refunds",
+      "index": 0,
+      "name": "Returns & refunds",
+      "definition": "Requests to return, exchange, or obtain a refund for an item, including return authorization and refund allocation. Do not infer a return from a fit or defect complaint alone."
+    },
+    {
+      "id": "delivery_tracking",
+      "index": 1,
+      "name": "Delivery & tracking",
+      "definition": "Dispatch, parcel location, delivery timing, carrier handoff, missing or misdelivered parcels. Delivery charges belong to shipping_fees."
+    },
+    {
+      "id": "size_fit",
+      "index": 2,
+      "name": "Size & fit",
+      "definition": "Dimensions, body measurements, sizing, clearance, and suitability of physical fit. Product damage alone is not a fit issue."
+    },
+    {
+      "id": "receipts_invoices",
+      "index": 3,
+      "name": "Receipts & invoices",
+      "definition": "Copies, formats, names, itemization, and corrections on purchase documents. U.S. itemized and gift receipts; no VAT-invoice assumptions."
+    },
+    {
+      "id": "product_defect",
+      "index": 4,
+      "name": "Product defects",
+      "definition": "An explicitly stated actual fault, damage, contamination, or safety defect. A hypothetical warranty question alone is not a defect report."
+    },
+    {
+      "id": "shipping_fees",
+      "index": 5,
+      "name": "Shipping fees",
+      "definition": "Postage, handling, shipping thresholds, weight charges, and delivery surcharges. A carrier-location question is delivery_tracking."
+    },
+    {
+      "id": "promotions",
+      "index": 6,
+      "name": "Promotions",
+      "definition": "Coupons, advertised offers, campaign eligibility, stacking, and promotional gifts. A purchase followed by a price drop belongs to price_adjustments."
+    },
+    {
+      "id": "price_adjustments",
+      "index": 7,
+      "name": "Price adjustments",
+      "definition": "Requests and eligibility for credit because a price fell after purchase, including competitor price protection questions. Do not assume the business actually offers the requested policy."
+    },
+    {
+      "id": "payments",
+      "index": 8,
+      "name": "Payments",
+      "definition": "Checkout payment methods, authorizations, payment failures, duplicate charges, and saved payment instruments. Refund destination as part of a return alone stays returns_refunds."
+    },
+    {
+      "id": "order_changes",
+      "index": 9,
+      "name": "Order changes",
+      "definition": "Edits or cancellations to an unfulfilled purchase or upcoming recurring order. A return of an already received item is returns_refunds."
+    },
+    {
+      "id": "stock_availability",
+      "index": 10,
+      "name": "Stock & availability",
+      "definition": "Availability, backorders, restock alerts, discontinuation, and reserving inventory. Questions about product characteristics belong to product_information."
+    },
+    {
+      "id": "product_information",
+      "index": 11,
+      "name": "Product information",
+      "definition": "Materials, ingredients, features, operation, care, and compatibility not specifically about physical fit. Tag the requested information rather than every mentioned object."
+    },
+    {
+      "id": "warranty_repairs",
+      "index": 12,
+      "name": "Warranty & repairs",
+      "definition": "Coverage, repair authorization, service status, maintenance effects, and paid servicing. Do not infer a repair request merely because a product is broken."
+    },
+    {
+      "id": "account_access",
+      "index": 13,
+      "name": "Account & access",
+      "definition": "Login, authentication, profile privacy, account recovery, account deletion, and profile preferences. Payment-card management stays payments."
+    },
+    {
+      "id": "loyalty_rewards",
+      "index": 14,
+      "name": "Loyalty & rewards",
+      "definition": "Points, membership status, loyalty accrual, redemption, transfers, and program benefits. Generic promotion questions stay promotions."
+    },
+    {
+      "id": "reviews_feedback",
+      "index": 15,
+      "name": "Reviews & feedback",
+      "definition": "Publishing, editing, moderation, visibility, attribution, and media for product reviews. A private complaint about a defect alone is not a review request."
+    },
+    {
+      "id": "other",
+      "index": 16,
+      "name": "Other",
+      "definition": "Requests outside the other sixteen topics, including human handoff, support hours, unrelated services, medical questions, and small talk. Exclusive fallback; never combine with a recognized topic."
+    }
+  ]
+}

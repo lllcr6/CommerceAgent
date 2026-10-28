@@ -1,0 +1,22 @@
+[
+  {
+    "query": "How much is shipping?",
+    "expect_answer_contains": "$49"
+  },
+  {
+    "query": "What do you charge for standard delivery?",
+    "expect_answer_contains": "$4.95"
+  },
+  {
+    "query": "When will an in-stock order ship?",
+    "expect_answer_contains": "1-2"
+  },
+  {
+    "query": "Can I return an unused item?",
+    "expect_answer_contains": "30"
+  },
+  {
+    "query": "How can I obtain an itemized receipt?",
+    "expect_answer_contains": "receipt"
+  }
+]

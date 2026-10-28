@@ -1,0 +1,17 @@
+{
+  "authorization": "User explicitly approved closing these four synthetic queue entries in this chat.",
+  "approved_ids": [
+    67,
+    101,
+    113,
+    125
+  ],
+  "closed": [
+    67,
+    101,
+    113,
+    125
+  ],
+  "skipped": [],
+  "history_and_traces": "preserved"
+}

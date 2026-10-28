@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Offline tests and data validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      # Deliberately fake credentials and loopback endpoints; no repository secrets.
+      CHAT_MODEL: ci-test-model
+      CHAT_BASE_URL: http://127.0.0.1:9/v1
+      CHAT_API_KEY: ci-placeholder
+      EMBED_BASE_URL: http://127.0.0.1:9/v1
+      EMBED_API_KEY: ci-placeholder
+      RERANK_BASE_URL: http://127.0.0.1:9/v1
+      RERANK_API_KEY: ci-placeholder
+      DATABASE_URL: mysql+asyncmy://ci:ci@127.0.0.1:9/commerceagent_ci
+      TEST_DATABASE_URL: mysql+asyncmy://ci:ci@127.0.0.1:9/commerceagent_test
+      MILVUS_URI: http://127.0.0.1:9
+      TOPIC_CLASSIFIER_ENABLED: "false"
+      LANGFUSE_PUBLIC_KEY: ""
+      LANGFUSE_SECRET_KEY: ""
+      HF_HUB_OFFLINE: "1"
+      HF_HUB_DISABLE_TELEMETRY: "1"
+      PYTHONUTF8: "1"
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python and uv
+        uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install locked application and test dependencies
+        run: uv sync --locked --group dev
+
+      - name: Check Python syntax
+        run: uv run --no-sync python -m compileall -q app scripts mcp_servers
+
+      - name: Run offline Python tests
+        run: uv run --no-sync pytest --offline -q --junitxml=test-results/pytest.xml
+
+      - name: Validate RAG annotations without provider calls
+        run: uv run --no-sync python -m scripts.validate_rag_eval --offline
+
+      - name: Audit frozen English topic partitions
+        run: uv run --no-sync python -m scripts.roberta.validate_dataset
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "22"
+
+      - name: Run frontend checks
+        run: node --test tests/frontend/*.cjs

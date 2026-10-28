@@ -1,0 +1,133 @@
+{
+  "source_report": "data/benchmarks/agent_performance.json",
+  "summary": {
+    "attempted_sessions": 36,
+    "attempted_turns": 108,
+    "planned_turns": 108,
+    "error_rate": 0.0,
+    "normal_completion_rate": 1.0,
+    "contract_pass_rate": 0.7962962962962963,
+    "successful_turn_latency_ms": {
+      "n": 108,
+      "mean": 20892.790269361016,
+      "p50": 19785.305666504428,
+      "p95": 35167.29291437658
+    },
+    "all_attempt_latency_ms": {
+      "n": 108,
+      "mean": 20892.790269361016,
+      "p50": 19785.305666504428,
+      "p95": 35167.29291437658
+    },
+    "ttft_ms": {
+      "n": 106,
+      "mean": 19042.981199700527,
+      "p50": 18893.73443752993,
+      "p95": 30247.08778085187
+    },
+    "usage_complete_sessions": 0,
+    "session_cost_cny": {
+      "n": 0,
+      "mean": null,
+      "p50": null,
+      "p95": null
+    },
+    "token_complete_sessions": 36,
+    "session_input_tokens": {
+      "n": 36,
+      "mean": 31633.222222222223,
+      "p50": 42406.5,
+      "p95": 58237.0
+    },
+    "session_output_tokens": {
+      "n": 36,
+      "mean": 4867.361111111111,
+      "p50": 4758.5,
+      "p95": 10242.5
+    }
+  },
+  "meta": {
+    "started_at": "2026-10-22T19:08:10.651811+00:00",
+    "base_url": "http://127.0.0.1:8000",
+    "repeats": 3,
+    "concurrency": 6,
+    "n_scenarios": 12,
+    "language": "en-US",
+    "scenario_version": "paw-hearth-en-US-v1",
+    "business_fingerprint": "811ba3c28cc81aa994c5b859e5317836c28127e6a48b863fbc918a9bd62ac8d7",
+    "scenarios_sha256": "907919fcfa93601a13384606a1bb879a1a51eea797824ac93d68887760b92bcc",
+    "account": "bench_acfecf2571e3",
+    "model": "qwen3.7-flash",
+    "pricing": {
+      "currency": "CNY",
+      "checked_at": "2026-10-21",
+      "source": "https://help.aliyun.com/zh/model-studio/model-pricing",
+      "region": "cn-beijing",
+      "basis": "Public standard list prices, ignoring temporary discounts, free quota and cache discounts. Estimates, not paid invoices.",
+      "models": {
+        "qwen3.7-plus": {
+          "input_per_million": 2.0,
+          "output_per_million": 8.0,
+          "max_input_tokens": 256000
+        },
+        "text-embedding-v4": {
+          "input_per_million": 0.5,
+          "output_per_million": 0.0
+        },
+        "qwen3-rerank": {
+          "input_per_million": 0.5,
+          "output_per_million": 0.0
+        }
+      }
+    },
+    "pricing_sha256": "5a76c7eef4c2c3db5dbbc172d134162390bc15fa7568ad14b06570960102820d",
+    "latency_scope": "Actual authenticated HTTP SSE from request to first nonempty answer delta and final done/interrupt event. Stream is drained to EOF before next turn; stream_closed_ms is separate. Excludes login and human wait time.",
+    "quality_scope": "Heuristic response contracts, not human-rated task resolution.",
+    "workload": "12 synthetic scenarios, 3 turns each, balanced by scenario; not production traffic.",
+    "resume_signature": "d0bd513356efa359e724f0d4e49e13155df1b81ba129a20fe37fba80a11ea9b7",
+    "selected_scenarios": [
+      "policy_return",
+      "billing_receipt",
+      "policy_warranty",
+      "product_litter",
+      "product_water",
+      "product_feeder",
+      "orders_status",
+      "orders_product",
+      "safety_ownership",
+      "safety_out_of_scope",
+      "support_hours",
+      "chitchat"
+    ],
+    "token_scope": "Provider-reported input and output tokens summed across model calls in complete three-turn conversations with complete usage traces. Estimated or missing usage is excluded; no price table is required.",
+    "cost_scope": "Provider-token list-price estimate for completed 3-turn sessions with complete traces; excludes unreported failed attempts, infrastructure and human escalation.",
+    "fail_fast_after_consecutive_errors": 6,
+    "run_id": "2026-10-22T190809658782+0000-402b4c",
+    "finished_at": "2026-10-22T19:15:08.717092+00:00",
+    "run_report": "agent_runs/2026-10-22T190809658782+0000-402b4c/agent_performance.json"
+  },
+  "cohort_provenance": null,
+  "outcomes": {
+    "created_at": "2026-10-22T19:15:08.733343+00:00",
+    "scope": "Derived categories only. Raw observations remain in agent_performance.json. A keyword contract is not task-resolution accuracy.",
+    "counts": {
+      "attempts": 108,
+      "normal_done": 108
+    },
+    "handoff_tool_calls": [],
+    "confirmation_interrupts": [],
+    "handoff_followup_409_rejections": [],
+    "other_errors": [],
+    "other_error_rate": 0.0,
+    "observed_model_usage": {
+      "text-embedding-v4": {
+        "calls": 66,
+        "input_tokens": 894,
+        "output_tokens": 0,
+        "estimated_cny": 0.0004470000000000001
+      }
+    },
+    "source_report": "agent_performance.json"
+  },
+  "cost_scenarios": null
+}

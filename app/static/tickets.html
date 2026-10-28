@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Paw & Hearth · Tickets</title>
+<link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicon.ico">
+<link rel="icon" type="image/svg+xml" href="/static/paws.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="/static/apple-touch-icon.png">
+<link rel="stylesheet" href="/static/support.css"><link rel="stylesheet" href="/static/tickets.css"><link rel="stylesheet" href="/static/pet-theme.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
+<body><div class="desk ticket-desk">
+<aside class="sessions" id="ticket-sidebar" aria-label="Tickets">
+  <div class="brand"><div><strong>Paw & Hearth</strong><small id="desk-label">Ticket service</small></div><button class="drawer-close" id="list-close" type="button" aria-label="Close ticket list">✕</button></div>
+  <div class="ticket-scopes" role="tablist" aria-label="Ticket scope"><button type="button" data-scope="pending" role="tab" hidden>Unassigned</button><button type="button" data-scope="mine" role="tab" aria-selected="true">My tickets</button><button type="button" data-scope="all" role="tab" hidden>All</button></div>
+  <label class="ticket-filter">Status<select id="state-filter"><option value="">All statuses</option><option value="pending">Awaiting support</option><option value="processing">In progress</option><option value="completed">Completed</option></select></label>
+  <div class="session-lists" id="ticket-list"><p class="empty-note">Loading…</p></div>
+  <div class="account"><div class="identity"><span class="account-avatar" id="avatar">U</span><div><small>Signed in as</small><strong id="account-name"></strong></div></div><a href="/orders" id="orders-link" hidden>My orders</a><a href="/" id="chat-link" hidden>Chat support</a><a href="/support" id="support-link" hidden>Support desk</a><a href="/admin" id="admin-link" hidden>Admin</a><button id="logout" type="button">Sign out</button></div>
+</aside>
+<main class="workspace">
+  <header class="chat-header"><button class="btn ticket-mobile" id="list-open" type="button" aria-controls="ticket-sidebar" aria-expanded="false">☰ Ticket</button><div class="heading"><h1 id="page-title">Ticket service</h1><span id="ticket-number">Select a ticket to view progress</span></div><span class="spacer"></span><button class="btn" id="refresh" type="button">Refresh</button></header>
+  <div class="ticket-content"><p id="stale" class="stale" role="status" hidden>This ticket has changed. Your draft is saved; refresh to review the latest version.</p><div id="ticket-detail"><div class="empty-state"><h2>A little help for every paw</h2><p>Select a ticket to view its owner and resolution.</p></div></div></div>
+</main></div><button id="ticket-backdrop" class="ticket-backdrop" type="button" aria-label="Close ticket list" tabindex="-1" hidden></button><div id="notice" role="status" hidden></div><script type="module" src="/static/tickets.js"></script></body></html>

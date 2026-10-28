@@ -1,0 +1,963 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paw & Hearth · Retrieval evaluation</title>
+  <link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/static/paws.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/acceptance.css" />
+  <style>
+
+    :root { --s1: #7fc4e8; --s2: #5fcf6a; --s3: #ff8095; --s4: #ff9f57; }
+
+    .kpis { margin-top: 16px; display: grid; gap: 14px; grid-template-columns: repeat(4, 1fr); }
+    @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+    .kpi {
+      background: var(--paper); border: 3px solid var(--ink); box-shadow: var(--shadow-sm);
+      padding: 10px 13px 12px;
+    }
+    .kpi .k-label { font-size: 11.5px; color: var(--muted); }
+    .kpi .k-val { font-size: 26px; font-weight: 700; line-height: 1.4; font-variant-numeric: tabular-nums; }
+    .kpi .k-val small { font-size: 14px; margin-left: 2px; }
+    .kpi .k-sub { font-size: 11.5px; color: #6d6478; line-height: 1.7; }
+    .kpi .k-sub b { font-weight: 700; color: var(--ink); }
+
+
+    .seg { display: inline-flex; border: 3px solid var(--ink); background: var(--paper); }
+    .seg button {
+      font: inherit; font-size: 12px; cursor: pointer; border: 0; background: transparent;
+      color: var(--ink); padding: 4px 11px; border-right: 3px solid var(--ink);
+    }
+    .seg button:last-child { border-right: 0; }
+    .seg button[aria-pressed="true"] { background: var(--fur); font-weight: 700; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 2px; }
+    .lg { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+    .lg i { width: 12px; height: 12px; border: 2px solid var(--ink); flex: none; }
+    .lg.win { font-weight: 700; }
+
+    .chart-scroll { overflow-x: auto; }
+    svg.chart { display: block; width: 100%; height: auto; min-width: 560px; font-family: inherit; }
+    svg .axis { fill: var(--muted); font-size: 11px; }
+    svg .glabel { fill: var(--ink); font-size: 12.5px; font-weight: 700; }
+    svg .gsub { fill: var(--muted); font-size: 10px; }
+    svg .vlabel { fill: var(--ink); font-size: 10.5px; font-variant-numeric: tabular-nums; }
+    svg .grid line { stroke: rgba(43,38,50,0.16); stroke-width: 1; }
+    svg .base { stroke: var(--ink); stroke-width: 2.5; }
+    svg .divider { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 4 4; }
+    svg .bar { stroke: var(--ink); stroke-width: 2; }
+
+
+    .read {
+      margin-top: 12px; border: 3px dashed var(--ink); background: var(--paper);
+      padding: 9px 13px; font-size: 12.5px; line-height: 1.8;
+    }
+    .read b { background: var(--fur); padding: 0 4px; border: 2px solid var(--ink); }
+    .read .k { font-weight: 700; }
+    .read::before {
+      content: "How to read"; float: left; font-size: 11px; background: var(--ink); color: var(--cream);
+      padding: 1px 7px; margin: 2px 9px 2px 0;
+    }
+
+
+    .gen-sub { display: grid; grid-template-columns: 1.45fr 1fr; gap: 14px; margin-top: 14px; }
+    @media (max-width: 820px) { .gen-sub { grid-template-columns: 1fr; } }
+    .faith-rows { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+    .fr-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; }
+    .fr-label .nm b { font-weight: 700; }
+    .fr-label .nm span { color: var(--muted); font-size: 11px; margin-left: 6px; }
+    .fr-label .pv { font-variant-numeric: tabular-nums; font-weight: 700; }
+    .bar-track { height: 14px; border: 2px solid var(--ink); background: var(--cream); margin-top: 4px; }
+    .bar-fill { height: 100%; background: var(--online); display: block; }
+    .bar-fill.mid { background: var(--fur); }
+    .bar-fill.low { background: var(--error); }
+    .gauge {
+      border: 3px solid var(--ink); background: var(--paper); box-shadow: var(--shadow-sm);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 14px 12px;
+    }
+    .gauge .ring { position: relative; width: 118px; height: 118px; }
+    .gauge .ring svg { transform: rotate(-90deg); }
+    .gauge .cval { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .gauge .cval .n { font-size: 25px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .gauge .cval .u { font-size: 10.5px; color: var(--muted); }
+    .gauge .glab { margin-top: 10px; font-size: 12px; color: #6d6478; line-height: 1.7; }
+    .gauge .glab b { color: var(--ink); font-weight: 700; }
+
+    .subhead { font-size: 13px; font-weight: 700; margin: 0 0 2px; }
+    .subhead .unit { color: var(--muted); font-weight: 400; font-size: 11.5px; margin-left: 7px; }
+
+    table.tbl tbody th { text-align: left; background: var(--paper); font-weight: 700; }
+    table.tbl tbody th i { width: 10px; height: 10px; border: 2px solid var(--ink); display: inline-block; margin-right: 6px; }
+    table.tbl tr.win td, table.tbl tr.win th { background: #fff0d6; }
+    table.tbl td.sep { border-left-width: 3px; }
+    td.dim { color: var(--muted); }
+
+
+    details.faith { margin-top: 12px; border: 3px solid var(--ink); background: var(--paper); }
+    details.faith > summary {
+      cursor: pointer; list-style: none; padding: 8px 12px; font-size: 12.5px; font-weight: 700;
+      background: var(--cream); display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+    }
+    details.faith > summary::-webkit-details-marker { display: none; }
+    details.faith > summary::before { content: "▸"; }
+    details.faith[open] > summary::before { content: "▾"; }
+    details.faith .hint { color: var(--muted); font-weight: 400; font-size: 11.5px; }
+    .fcbody { padding: 4px 12px 12px; }
+    .fcbody .lead { font-size: 12px; color: #6d6478; line-height: 1.8; margin: 10px 0 2px; }
+    .fcase { border: 2px solid var(--ink); background: var(--cream); padding: 9px 11px; margin-top: 10px; }
+    .fcase .fh { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .fcase .fid { font-size: 11px; border: 2px solid var(--ink); background: var(--fur); padding: 0 5px; }
+    .fcase .fq { font-weight: 700; font-size: 13px; }
+    .fcase .fb { font-size: 11px; color: var(--muted); }
+    .fcase .frow { font-size: 12.5px; line-height: 1.75; margin-top: 7px; }
+    .fcase .frow .k { display: block; font-size: 10.5px; color: var(--muted); }
+    .fcase .ans { white-space: pre-wrap; border: 2px solid var(--ink); background: var(--paper); padding: 8px 10px; margin-top: 3px; }
+    .faith-none { margin-top: 12px; border: 3px solid var(--ink); background: #e8fae9; padding: 10px 13px; font-size: 12.5px; }
+
+
+    .fcase .fh .grow { flex: 1; }
+    .fcase .fmeta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .st { font-size: 11px; border: 2px solid var(--ink); padding: 0 6px; background: var(--paper); white-space: nowrap; }
+    .st.open { background: #ffe0e0; }
+    .st.done { background: #e8fae9; }
+    .st.skip { background: #eee; color: var(--muted); }
+    .st.again { background: var(--fur); font-weight: 700; }
+    .acts { display: flex; gap: 7px; margin-top: 9px; }
+    .acts button {
+      cursor: pointer; border: 2px solid var(--ink); background: var(--paper);
+      padding: 3px 11px; font: inherit; font-size: 11.5px; box-shadow: 2px 2px 0 var(--ink);
+    }
+    .acts button:hover:not([disabled]) { background: var(--fur); }
+    .acts button:active:not([disabled]) { box-shadow: none; transform: translate(2px, 2px); }
+    .acts button[disabled] { opacity: .4; cursor: default; box-shadow: none; }
+
+
+    .halluc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+    @media (max-width: 720px) { .halluc { grid-template-columns: 1fr; } }
+    .halluc .hcard { border: 3px solid var(--ink); background: var(--paper); padding: 9px 12px 11px; }
+    .halluc .hcard.main { background: var(--cream); box-shadow: var(--shadow-sm); }
+    .halluc .hl { font-size: 11.5px; color: var(--muted); }
+    .halluc .hv { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.45; }
+    .halluc .hv small { font-size: 13px; margin-left: 3px; color: var(--muted); font-weight: 400; }
+    .halluc .hs { font-size: 11.5px; color: #6d6478; line-height: 1.7; }
+    .halluc .hs b { color: var(--ink); }
+
+    .noteform { display: flex; gap: 7px; margin-top: 9px; flex-wrap: wrap; align-items: center; }
+    .noteform input {
+      flex: 1; min-width: 260px; font: inherit; font-size: 12.5px; padding: 4px 8px;
+      border: 2px solid var(--ink); background: var(--paper); color: var(--ink);
+    }
+    .noteform button {
+      cursor: pointer; border: 2px solid var(--ink); background: var(--fur);
+      padding: 3px 11px; font: inherit; font-size: 11.5px; box-shadow: 2px 2px 0 var(--ink);
+    }
+    .noteform button.ghost { background: var(--paper); box-shadow: none; }
+    .noteform button:active { box-shadow: none; transform: translate(2px, 2px); }
+
+    .ledger-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0 2px; }
+    .ledger-bar .tab {
+      cursor: pointer; border: 2px solid var(--ink); background: var(--paper);
+      padding: 4px 11px; font: inherit; font-size: 11.5px;
+    }
+    .ledger-bar .tab.on { background: var(--fur); font-weight: 700; }
+
+
+    details.cit { border: 2px solid var(--ink); background: var(--paper); margin-top: 8px; }
+    details.cit > summary {
+      cursor: pointer; list-style: none; padding: 6px 10px; font-size: 11.5px;
+      background: var(--cream); color: #6d6478;
+    }
+    details.cit > summary::-webkit-details-marker { display: none; }
+    details.cit > summary::before { content: "▸ "; }
+    details.cit[open] > summary::before { content: "▾ "; }
+    details.cit .c1 { border-top: 2px solid var(--ink); padding: 8px 11px; font-size: 12.5px; line-height: 1.75; }
+    details.cit .c1.used { background: #fffaf0; }
+    details.cit .c1 .cn { font-weight: 700; border: 2px solid var(--ink); padding: 0 4px; background: var(--paper); color: var(--muted); }
+    details.cit .c1 .cn.on { background: var(--fur); color: var(--ink); }
+    details.cit .c1 .utag { font-size: 10.5px; border: 2px solid var(--ink); background: var(--fur); padding: 0 5px; margin-left: 7px; }
+    details.cit .c1 .ctext { margin-top: 4px; white-space: pre-wrap; }
+    details.cit .c1 .cp { font-size: 10.5px; color: var(--muted); margin-top: 3px; }
+
+    .pager { display: flex; align-items: center; gap: 10px; margin-top: 13px; font-size: 11.5px; color: #6d6478; }
+    .pager button {
+      cursor: pointer; border: 2px solid var(--ink); background: var(--paper);
+      padding: 3px 11px; font: inherit; box-shadow: 2px 2px 0 var(--ink);
+    }
+    .pager button:hover:not([disabled]) { background: var(--fur); }
+    .pager button[disabled] { opacity: .4; cursor: default; box-shadow: none; }
+
+    .notes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    @media (max-width: 820px) { .notes { grid-template-columns: 1fr; } }
+    .note { border: 3px solid var(--ink); background: var(--paper); padding: 10px 13px; }
+    .note h3 { margin: 0 0 5px; font-size: 12.5px; }
+    .note p { margin: 0; font-size: 12px; color: #6d6478; line-height: 1.8; }
+    .note code { background: var(--cream); border: 2px solid var(--ink); padding: 0 4px; font-size: 11.5px; }
+  </style>
+  <link id="mh-admin-css" rel="stylesheet" href="/static/admin.css" />
+<link rel="stylesheet" href="/static/pet-theme.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Retrieval evaluation</h1>
+      <span class="sub">Four strategies · Ranking / evidence coverage / answer quality,Run all</span>
+      <span class="spacer"></span>
+      <button class="btn" id="refreshBtn">Refresh</button>
+    </div>
+
+    <div id="body"><div class="miss">Loading…</div></div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="/static/admin.js"></script>
+  <script src="/static/acceptance.js"></script>
+  <script>
+
+    const STRAT = [
+      { key: "vector", label: "Dense", v: "var(--s1)" },
+      { key: "bm25", label: "Dense BM25", v: "var(--s2)" },
+      { key: "hybrid", label: "Hybrid", v: "var(--s3)" },
+      { key: "hybrid_rerank", label: "Hybrid + Rerank", v: "var(--s4)" },
+    ];
+    const BUCKETS = [
+      { key: "A_policy", label: "Policy queries", chartLabel: "Policy", sub: "A_policy" },
+      { key: "B_model", label: "Model queries", chartLabel: "Product models", sub: "B_model" },
+      { key: "C_colloquial", label: "Conversational queries", chartLabel: "Conversational", sub: "C_colloquial" },
+      { key: "E_multi", label: "Cross-document questions", chartLabel: "Multi-source", sub: "E_multi" },
+      { key: "overall", label: "Overall", sub: "overall", agg: true },
+    ];
+    const METRICS = ["MRR", "Recall@5", "Precision@5", "nDCG@5", "Evidence coverage"];
+    const NS = "http://www.w3.org/2000/svg";
+    const fmt = (v) => (v === null || v === undefined ? "—" : v.toFixed(2));
+
+    function svgEl(tag, attrs, txt) {
+      const e = document.createElementNS(NS, tag);
+      for (const k in attrs) e.setAttribute(k, attrs[k]);
+      if (txt !== undefined && txt !== null) e.textContent = txt;
+      return e;
+    }
+
+    function valFn(d, metric) {
+      if (metric === "nDCG@5") return (s, b) => ((d.retrieval[s] || {})[b] || {}).ndcg ?? null;
+      if (metric === "MRR") return (s, b) => ((d.retrieval[s] || {})[b] || {}).mrr ?? 0;
+      if (metric === "Precision@5") return (s, b) => ((d.retrieval[s] || {})[b] || {}).precision ?? null;
+      if (metric === "Recall@5") return (s, b) => ((d.retrieval[s] || {})[b] || {}).recall ?? 0;
+      if (metric === "Evidence coverage") return (s, b) => (d.evidence_coverage[s] || {})[b] ?? null;
+      if (metric === "Answer coverage") {
+        return (s, b) => (((d.generation || {}).answer_coverage || {})[s] || {})[b];
+      }
+      return () => 0;
+    }
+
+
+    function drawChart(svg, getVal, metric) {
+      const W = 720, H = 348, M = { l: 40, r: 14, t: 20, b: 58 };
+      const plotW = W - M.l - M.r, plotH = H - M.t - M.b, y0 = M.t + plotH;
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      const grid = svgEl("g", { class: "grid" });
+      for (const t of [0, 0.25, 0.5, 0.75, 1.0]) {
+        const ty = y0 - t * plotH;
+        grid.appendChild(svgEl("line", { x1: M.l, y1: ty, x2: M.l + plotW, y2: ty }));
+        svg.appendChild(svgEl("text", { x: M.l - 8, y: ty + 3.5, "text-anchor": "end", class: "axis" }, t.toFixed(2)));
+      }
+      svg.insertBefore(grid, svg.firstChild);
+      svg.appendChild(svgEl("line", { x1: M.l, y1: y0, x2: M.l + plotW, y2: y0, class: "base" }));
+      const gap = 26, groupW = (plotW - gap * (BUCKETS.length - 1)) / BUCKETS.length;
+      const pad = 9, barGap = 4;
+      const barW = (groupW - pad * 2 - barGap * (STRAT.length - 1)) / STRAT.length;
+      BUCKETS.forEach((b, i) => {
+        const gx = M.l + i * (groupW + gap);
+        if (b.agg) svg.appendChild(svgEl("line", { x1: gx - gap / 2, y1: M.t - 2, x2: gx - gap / 2, y2: y0, class: "divider" }));
+        STRAT.forEach((s, j) => {
+          const raw = getVal(s.key, b.key);
+          const val = (raw === null || raw === undefined) ? 0 : raw;
+          const bx = gx + pad + j * (barW + barGap);
+          const bh = Math.max(val * plotH, 2), by = y0 - bh;
+          svg.appendChild(svgEl("rect", {
+            x: bx.toFixed(1), y: by.toFixed(1), width: barW.toFixed(1), height: bh.toFixed(1),
+            fill: s.v, class: "bar", "shape-rendering": "crispEdges",
+            opacity: (raw === null || raw === undefined) ? 0.25 : 1,
+          }));
+          svg.appendChild(svgEl("text", {
+            x: (bx + barW / 2).toFixed(1), y: (by - 5).toFixed(1), "text-anchor": "middle", class: "vlabel",
+          }, (raw === null || raw === undefined) ? "—" : fmt(raw)));
+        });
+        const cx = gx + groupW / 2;
+        const label = svgEl("text", { x: cx.toFixed(1), y: y0 + 22, "text-anchor": "middle", class: "glabel", "aria-label": b.label }, b.chartLabel || b.label);
+        label.appendChild(svgEl("title", {}, b.label));
+        svg.appendChild(label);
+        svg.appendChild(svgEl("text", { x: cx.toFixed(1), y: y0 + 37, "text-anchor": "middle", class: "gsub" }, b.sub));
+      });
+    }
+
+    function legend(bestKey) {
+      const box = el("div", "legend");
+      for (const s of STRAT) {
+        const sp = el("span", "lg" + (s.key === bestKey ? " win" : ""));
+        const i = el("i");
+        i.style.background = s.v;
+        sp.appendChild(i);
+        sp.appendChild(document.createTextNode(s.label + (s.key === bestKey ? "(Best)" : "")));
+        box.appendChild(sp);
+      }
+      return box;
+    }
+
+    function kpiBox(d) {
+      const mrr = valFn(d, "MRR"), G = d.generation;
+      const cB = mrr("bm25", "C_colloquial"), cR = mrr("hybrid_rerank", "C_colloquial");
+      const best = d.best, bestLabel = (STRAT.find((s) => s.key === best.strategy) || {}).label || "—";
+      const items = [
+        { label: "Best overall MRR", val: fmt(best.mrr), sub: bestLabel + " · Best of four strategies" },
+        { label: "Conversational bucket MRR Improvement", val: (cR - cB >= 0 ? "+" : "") + (cR - cB).toFixed(2),
+          sub: "Dense BM25 " + fmt(cB) + " → Hybrid + Rerank " + fmt(cR) },
+        G ? { label: "Answer coverage(Rerank)", val: fmt(valFn(d, "Answer coverage")("hybrid_rerank", "overall")),
+              sub: "Dense BM25 Only " + fmt(valFn(d, "Answer coverage")("bm25", "overall")) }
+          : { label: "End-to-end answer coverage", val: "—", sub: "Generation evaluation was not run" },
+        G && G.refusal.rate !== null && G.refusal.rate !== undefined
+          ? { label: "Out-of-scope refusal", val: String(Math.round(G.refusal.rate * 100)), unit: "%",
+              sub: G.refusal.correct + " / " + G.refusal.total + " Correctly refused and queued" }
+        : G ? { label: "Out-of-scope refusal", val: "—", sub: "No questions evaluated this run(Provider unavailable)" }
+          : { label: "Out-of-scope refusal", val: "—", sub: "Generation evaluation was not run" },
+      ];
+      const box = el("div", "kpis");
+      for (const k of items) {
+        const c = el("div", "kpi");
+        c.appendChild(el("div", "k-label", k.label));
+        const v = el("div", "k-val", k.val);
+        if (k.unit) v.appendChild(el("small", null, k.unit));
+        c.appendChild(v);
+        c.appendChild(el("div", "k-sub", k.sub));
+        box.appendChild(c);
+      }
+      return box;
+    }
+
+    function metaBar(d) {
+      const m = d.meta, bar = el("div", "gatebar");
+      const stats = [
+        ["Evaluation set", (m.n_samples ?? "—") + " questions"],
+        ["Knowledge base", (m.kb_chunks ?? "—") + " chunks"],
+        ["Embedding / rerank", (m.embed_model || "Not recorded") + " · " + (m.rerank_model || "Not recorded")],
+        ["Judge model", m.judge_model || "Not recorded"],
+        ["Last run", fmtTime(m.generated_at)],
+      ];
+      if (m.repeats) stats.push(["Duplicate retrieval", m.repeats + " times"]);
+      for (const [k, v] of stats) {
+        const s = el("div", "stat");
+        s.appendChild(el("span", null, k));
+        s.appendChild(el("b", null, v));
+        bar.appendChild(s);
+      }
+      return bar;
+    }
+
+
+    function retrievalPanel(d) {
+      const p = el("div", "panel");
+      const h = el("h2", null, "Retrieval quality(Deterministic)");
+      h.appendChild(el("span", "pill info", "Reproducible metrics"));
+      p.appendChild(h);
+      if (d.meta.evaluation_scope === "retrieval_only") p.appendChild(el("p", "lede", "This run measures retrieval quality only. Answer quality, evidence coverage, and refusal accuracy were not evaluated; a dash indicates no result."));
+      if (d.relevance && d.relevance.needs_rerun) {
+        p.appendChild(el("p", "missing", "These results use an older scoring method. Run a new evaluation to include all current metrics."));
+      }
+      p.appendChild(el("p", "lede",
+        "MRR@10 measures how early the first relevant passage appears. Recall@5 measures how many relevant passages appear in the top five results. "
+        + "Precision@5 is the number of relevant passages in the top five, divided by five. Evidence coverage checks whether the retrieved passages contain the reference answer’s key facts. "
+        + "Questions that cannot be answered from the knowledge base are assessed separately for refusal accuracy."));
+
+      const top = el("div");
+      top.style.cssText = "display:flex;align-items:center;gap:12px;flex-wrap:wrap";
+      const title = el("div", "subhead", "MRR");
+      title.appendChild(el("span", "unit", "Higher is better · 0–1"));
+      top.appendChild(title);
+      top.appendChild(el("span", "spacer"));
+      const seg = el("div", "seg");
+      top.appendChild(seg);
+      p.appendChild(top);
+      p.appendChild(legend(d.best.strategy));
+
+      const scroll = el("div", "chart-scroll");
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("class", "chart");
+      svg.setAttribute("viewBox", "0 0 720 348");
+      scroll.appendChild(svg);
+      p.appendChild(scroll);
+      const read = el("div", "read");
+      p.appendChild(read);
+
+      const mrr = valFn(d, "MRR");
+      const bestLabel = (STRAT.find((s) => s.key === d.best.strategy) || {}).label || "—";
+      const READ = {
+        "nDCG@5": () => "Relevant results in the top five chunk by 1/log₂(Rank+1) Discount by rank and normalize by ideal ranking, then macro-average. Duplicate ID Count each ID once.",
+        "MRR": () => !(d.relevance && d.relevance.needs_rerun)
+          ? "MRR@10 First relevant result in the top ten chunk Reciprocal rank; no hit is 0，Then average across questions."
+          : "Dense-only model-query score <b>" + fmt(mrr("vector", "B_model"))
+          + "</b>,Closely related model IDs were confused. In conversational queries, dense BM25 Only <b>" + fmt(mrr("bm25", "C_colloquial"))
+          + "</b>,Keyword mismatch. Address both weaknesses to improve results,Overall " + bestLabel + " <b>" + fmt(d.best.mrr) + "</b> ranks first.",
+        "Recall@5": () => d.relevance && d.relevance.needs_rerun
+          ? "Legacy section-based recall is not directly comparable with current metrics."
+          : "Relevant chunks retrieved in the top five, calculated per question chunk Count ÷ Annotated relevant chunk Total relevant chunks, averaged per question. Matching headings cannot replace correct chunk ID。",
+        "Precision@5": () => d.relevance && d.relevance.needs_rerun
+          ? "Legacy report did not calculate Precision@5. A dash means no measurement. Rerun to obtain new results."
+          : "Relevant results in the top five, calculated per question chunk Count ÷ 5，Then average across questions. Duplicate ID Count each ID once; fewer than five results still uses 5 as the denominator.",
+        "Evidence coverage": () => "Among the ten retrieved sources,How many reference points are supported. Dense BM25 Conversational-bucket score <b>"
+          + fmt(valFn(d, "Evidence coverage")("bm25", "C_colloquial")) + "</b>,Some facts needed for the answer were missing."
+          + "Hybrid + Reranking covered all four buckets.",
+      };
+      const NOTE_KIND = { "MRR": "rag_mrr", "Recall@5": "rag_recall", "Precision@5": "rag_precision", "Evidence coverage": "rag_coverage" };
+      const buttons = [];
+      function setMetric(m) {
+        drawChart(svg, valFn(d, m), m);
+        read.innerHTML = readNoteHtml((d.read_notes || {})[NOTE_KIND[m]], READ[m]());
+        title.textContent = m;
+        title.appendChild(el("span", "unit", "Higher is better · 0–1"));
+        buttons.forEach((b) => b.setAttribute("aria-pressed", b.dataset.m === m));
+      }
+      for (const m of METRICS) {
+        const b = el("button", null, m);
+        b.type = "button";
+        b.dataset.m = m;
+        b.addEventListener("click", () => setMetric(m));
+        buttons.push(b);
+        seg.appendChild(b);
+      }
+      setMetric("MRR");
+      return p;
+    }
+
+
+    function generationPanel(d) {
+      const p = el("div", "panel");
+      const h = el("h2", null, "Generation quality(End to end)");
+      const fullyScored = d.evaluation_complete ?? (d.generation?.skipped === 0);
+      h.appendChild(el("span", "pill " + (fullyScored ? "info" : "missing"),
+        fullyScored ? "Fully scored" : d.generation_done ? "Partially scored" : "Not completed"));
+      p.appendChild(h);
+      p.appendChild(el("p", "lede",
+        "Each strategy supplies evidence to the same model,Answer generated,Then the judge checks how many reference points are supported."
+        + "Better retrieval supports more complete answers,This is end-to-end evidence. Faithfulness is evaluated below,"
+        + "Also check whether unsupported questions were refused."));
+      if (!d.generation_done) {
+        p.appendChild(missingBox(d.meta.evaluation_scope === "retrieval_only"
+          ? "Retrieval ablation only. Generation judging and unsupported refusal were not measured. To measure them, rerun RAG Evaluation."
+          : "No complete generation results for this run. Rerun RAG Evaluation to complete measurement."));
+        return p;
+      }
+      const G = d.generation;
+      if (!fullyScored) p.appendChild(el("p", "lede", "Some scores are missing. These results use successfully evaluated samples only and are excluded from the completed-run trend. Continue evaluation to fill missing work."));
+      const t = el("div", "subhead", "Answer coverage by strategy");
+      t.appendChild(el("span", "unit", "Fraction of reference points covered by the generated answer · LLM Scoring"));
+      p.appendChild(t);
+      const scroll = el("div", "chart-scroll");
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("class", "chart");
+      svg.setAttribute("viewBox", "0 0 720 348");
+      scroll.appendChild(svg);
+      p.appendChild(scroll);
+      drawChart(svg, valFn(d, "Answer coverage"), "Answer coverage");
+      const acR = valFn(d, "Answer coverage")("hybrid_rerank", "overall");
+      const acB = valFn(d, "Answer coverage")("bm25", "overall");
+      const read = el("div", "read");
+      read.innerHTML = readNoteHtml((d.read_notes || {})["rag_answer_coverage"],
+        "Same generation prompt,Change retrieval strategy only:Hybrid + Overall answer coverage with reranking <b>" + fmt(acR)
+        + "</b>,Dense BM25 Only <b>" + fmt(acB) + "</b>。Weak retrieval,Missing evidence,The answer also misses reference points.");
+      p.appendChild(read);
+
+      const sub = el("div", "gen-sub");
+      const left = el("div");
+      const lt = el("div", "subhead", "Faithfulness Faithfulness");
+      lt.appendChild(el("span", "unit", "Hybrid + Rerank · Answer faithfulness"));
+      left.appendChild(lt);
+      const rows = el("div", "faith-rows");
+      for (const b of BUCKETS.filter((x) => !x.agg)) {
+        const f = (G.faithfulness || {})[b.key] || {};
+        const has = f.v !== null && f.v !== undefined;      // Not evaluated ≠ 0 score
+        const v = has ? f.v : 0;
+        const row = el("div");
+        const lab = el("div", "fr-label");
+        const nm = el("span", "nm");
+        nm.appendChild(el("b", null, b.label));
+        nm.appendChild(el("span", null, b.key + " · Evaluate " + (f.answered || 0) + " questions"));
+        lab.appendChild(nm);
+        lab.appendChild(el("span", "pv", has ? v.toFixed(2) : "—"));
+        row.appendChild(lab);
+        const track = el("div", "bar-track");
+        const fill = el("span", "bar-fill" + (v >= 0.9 ? "" : (v >= 0.7 ? " mid" : " low")));
+        fill.style.width = Math.max(2, Math.round(v * 100)) + "%";
+        if (!has) fill.style.opacity = "0.25";
+        track.appendChild(fill);
+        row.appendChild(track);
+        rows.appendChild(row);
+      }
+      left.appendChild(rows);
+      sub.appendChild(left);
+
+      const refusal = G.refusal || {};
+      const hasRefusalRate = refusal.rate !== null && refusal.rate !== undefined;
+      if (hasRefusalRate) {
+      const R = 52, C = 2 * Math.PI * R;
+      const gauge = el("div", "gauge");
+      gauge.innerHTML = '<div class="ring"><svg width="118" height="118" viewBox="0 0 118 118">'
+        + '<circle cx="59" cy="59" r="' + R + '" fill="none" stroke="#fff6e6" stroke-width="13"></circle>'
+        + '<circle cx="59" cy="59" r="' + R + '" fill="none" stroke="var(--online)" stroke-width="13"'
+        + ' stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="'
+        + (C * (1 - refusal.rate)).toFixed(1) + '"></circle></svg>'
+        + '<div class="cval"><span class="n">' + Math.round(refusal.rate * 100)
+        + '<small>%</small></span><span class="u">Refusal rate</span></div></div>'
+        + '<div class="glab"><b>D_absent bucket</b> · Out-of-scope questions<br>' + refusal.correct + " / "
+        + refusal.total + " Correctly refused and queued</div>";
+      sub.appendChild(gauge);
+      } else {
+        sub.appendChild(missingBox("Unsupported-question refusal was not measured successfully in this run. No refusal rate is available."));
+      }
+      p.appendChild(sub);
+      if (hasRefusalRate) p.appendChild(refusalCases(refusal));
+      if (G.skipped) {
+        const ids = (refusal.skipped_ids || []);
+        p.appendChild(el("div", "note",
+          "Note:This run includes " + G.skipped + " judge calls timed out or failed and were skipped(Provider unavailable),Uses available samples."
+          + (ids.length ? "Skipped out-of-scope questions " + ids.join("、") + "。" : "")));
+      }
+      return p;
+    }
+
+
+    function refusalCases(R) {
+      const cases = (R && R.cases) || [];
+      if (!cases.length) {
+        const ok = el("div", "faith-none");
+        ok.innerHTML = "✓ Evaluated out-of-scope questions <b>" + (R ? R.total : 0)
+          + " questions correctly refused</b>,No incorrectly answered unsupported questions.";
+        return ok;
+      }
+      const box = el("details", "faith");
+      const sum = el("summary");
+      sum.appendChild(document.createTextNode("Incorrectly answered unsupported cases"));
+      sum.appendChild(el("span", "pill sev-Medium", cases.length + " examples"));
+      sum.appendChild(el("span", "hint", "Expand to inspect the evidence that passed the gate"));
+      box.appendChild(sum);
+      const body = el("div", "fcbody");
+      body.appendChild(el("div", "lead",
+        "These unsupported questions passed both evidence gates. Inspect the source treated as an answer,"
+        + "Tighten the threshold or document an explicit exclusion."));
+      for (const c of cases) {
+        const card = el("div", "fcase");
+        const fh = el("div", "fh");
+        fh.appendChild(el("span", "fid", c.id));
+        fh.appendChild(el("span", "fq", c.query));
+        fh.appendChild(el("span", "fb", "Out-of-scope bucket"));
+        card.appendChild(fh);
+        const r1 = el("div", "frow");
+        r1.appendChild(el("span", "k", "Section treated as evidence"));
+        r1.appendChild(document.createTextNode(c.section_path || "—"));
+        card.appendChild(r1);
+        const r2 = el("div", "frow");
+        r2.appendChild(el("span", "k", "That source(Original text)"));
+        r2.appendChild(el("div", "ans", c.evidence || ""));
+        card.appendChild(r2);
+        body.appendChild(card);
+      }
+      box.appendChild(body);
+      return box;
+    }
+
+
+    function tablePanel(d) {
+      const p = el("div", "panel");
+      p.appendChild(el("h2", null, "Full data"));
+      p.appendChild(el("p", "lede",
+        "The left side shows bucket-level results MRR,Overall evidence and answer coverage appear on the right; the highlighted row is overall MRR best strategy."));
+      const box = el("div", "scroll-x");
+      const t = el("table", "tbl");
+      const thead = el("thead");
+      const hr = el("tr");
+      for (const h of ["Strategy", "Policy MRR", "Model MRR", "Conversational MRR", "Cross-document MRR", "Overall MRR", "Evidence coverage", "Answer coverage"]) {
+        hr.appendChild(el("th", null, h));
+      }
+      thead.appendChild(hr);
+      t.appendChild(thead);
+      const tb = el("tbody");
+      const mrr = valFn(d, "MRR");
+      for (const s of STRAT) {
+        const tr = el("tr", s.key === d.best.strategy ? "win" : null);
+        const th = el("th");
+        const i = el("i");
+        i.style.background = s.v;
+        th.appendChild(i);
+        th.appendChild(document.createTextNode(s.label));
+        tr.appendChild(th);
+        for (const b of ["A_policy", "B_model", "C_colloquial", "E_multi", "overall"]) {
+          tr.appendChild(el("td", "num", mrr(s.key, b).toFixed(2)));
+        }
+        tr.appendChild(el("td", "num sep", fmt(valFn(d, "Evidence coverage")(s.key, "overall"))));
+        tr.appendChild(el("td", "num" + (d.generation_done ? "" : " dim"),
+          d.generation_done ? fmt(valFn(d, "Answer coverage")(s.key, "overall")) : "—"));
+        tb.appendChild(tr);
+      }
+      t.appendChild(tb);
+      box.appendChild(t);
+      p.appendChild(box);
+
+      const G = d.generation;
+      const tip = el("div", "tip");
+      tip.innerHTML = G?.refusal?.rate !== null && G?.refusal?.rate !== undefined
+        ? "<b>D_absent</b> Out-of-scope questions(Should refuse)No reference answer,Excluded from the table above. Uses the active pipeline,Only evaluates refusal decisions:"
+          + G.refusal.correct + " / " + G.refusal.total + " = "
+          + Math.round(G.refusal.rate * 100) + "% Correctly refused."
+        : "<b>D_absent</b> Out-of-scope refusal rate is unavailable for this run. No percentage is reported without valid evaluation results.";
+      p.appendChild(tip);
+
+      if (G) p.appendChild(faithCases(G.faithfulness_cases || []));
+      return p;
+    }
+
+    function faithCases(cases) {
+      if (!cases.length) {
+        const ok = el("div", "faith-none");
+        ok.innerHTML = "✓ Generated answers from this run’s active pipeline<b>No hallucinations flagged</b>,"
+          + "Every factual claim is supported by retrieved evidence.";
+        return ok;
+      }
+      const BMAP = Object.fromEntries(
+        BUCKETS.map((b) => [b.key, b.label.replace("categories", "")]));
+      const box = el("details", "faith");
+      const sum = el("summary");
+      sum.appendChild(document.createTextNode("Hallucination cases"));
+      sum.appendChild(el("span", "pill sev-Medium", cases.length + " examples"));
+      sum.appendChild(el("span", "hint", "Expand to view question, answer, and judge reasoning"));
+      box.appendChild(sum);
+      const body = el("div", "fcbody");
+      body.appendChild(el("div", "lead",
+        "These cases come from generated answers in the active pipeline,Cases where generated factual claims were not supported by retrieved evidence."
+        + "Identify the specific unsupported sentence,Use this to improve the knowledge base or decision rules."));
+      for (const c of cases) {
+        const card = el("div", "fcase");
+        const fh = el("div", "fh");
+        fh.appendChild(el("span", "fid", c.id));
+        fh.appendChild(el("span", "fq", c.query));
+        fh.appendChild(el("span", "fb", (BMAP[c.bucket] || c.bucket) + "bucket"));
+        card.appendChild(fh);
+        const r1 = el("div", "frow");
+        r1.appendChild(el("span", "k", "Judge reasoning"));
+        r1.appendChild(document.createTextNode(c.reason || "—"));
+        card.appendChild(r1);
+        const r2 = el("div", "frow");
+        r2.appendChild(el("span", "k", "Generated answer(Original text)"));
+        r2.appendChild(el("div", "ans", c.answer || ""));
+        card.appendChild(r2);
+        body.appendChild(card);
+      }
+      box.appendChild(body);
+      return box;
+    }
+
+
+    function notesPanel() {
+      const p = el("div", "panel");
+      p.appendChild(el("h2", null, "How to read this report"));
+      const box = el("div", "notes");
+      const NOTES = [
+        ["Three query types,Three kinds of imbalance", "Model queries include closely related identifiers(Fountains and litter boxes),Dense-only retrieval can confuse model IDs;Conversational paraphrases,Dense BM25 Keyword mismatch. Hybrid + Reranking addresses both weaknesses."],
+        ["Fusion ≠ Rerank", "Dense RRF Fusion can be affected by weaker keyword matches BM25 Reranking moves relevant evidence toward the top,Overall MRR ranks first,This provides evidence for reranking."],
+        ["Deterministic vs LLM Judge", "Retrieval and evidence checks are separate from generation,Retrieval is reproducible. Answer coverage and faithfulness use a judge,Small variation; failed or timed-out judge calls are skipped,One failure does not invalidate the entire run."],
+        ["Two evidence gates before generation", "Mechanical and semantic evidence gates run before generation; insufficient evidence leads to refusal,Questions enter low_confidence_questions,All out-of-scope questions should be refused."],
+      ];
+      for (const [t, body] of NOTES) {
+        const n = el("div", "note");
+        n.appendChild(el("h3", null, t));
+        n.appendChild(el("p", null, body));
+        box.appendChild(n);
+      }
+      p.appendChild(box);
+      return p;
+    }
+
+    function jobPanel(d) {
+      const p = el("div", "panel tight");
+      const h = el("h2", null, "Run evaluation");
+      h.appendChild(el("span", "pill missing", "Takes several minutes"));
+      p.appendChild(h);
+      p.appendChild(el("p", "lede",
+        "Continue evaluation reuses saved successful calls and retries missing or failed work. Models, questions, knowledge, prompts, and settings must match. Rerun evaluation starts a fresh measurement and uses model credits again. Stopping preserves completed calls for continuation."));
+      const busy = d.job.specs.some(s => s.status === "running");
+      const specs = d.job.specs.map(s => {
+        const resume = s.name === "eval-rag-continue";
+        return {...s, title: "RAG evaluation",
+          actionLabel: resume ? "Continue evaluation" : "Rerun evaluation", runningLabel: "Evaluating…",
+          disabledReason: busy && s.status !== "running" ? "An evaluation is running"
+            : resume && d.job.resume_available === false ? "No checkpoint yet. Run a new evaluation first." : "",
+          hideIdleStop: true,
+          confirmationMessage: resume ? "Continue the saved evaluation? Only missing work will call the model again. Changed configurations require a fresh run."
+            : "Start a fresh evaluation? All questions will be evaluated again and use model credits. Previous checkpoints remain on disk.", needs: ""};
+      });
+      const updated = d.present && d.meta && d.meta.generated_at;
+      p.appendChild(jobRow(specs, load, updated ? "Last evaluated: " + fmtTime(updated) : ""));
+      return p;
+    }
+
+
+    const LEDGER = {status: "unresolved", page: 1, size: 5};
+    const ST_CLS = {"unresolved": "open", "resolved": "done", "dismissed": "skip"};
+    const CASE_STATUS_LABEL = {"unresolved": "Unresolved", "resolved": "Resolved", "dismissed": "No action needed"};
+
+    function ledgerPanel() {
+      const p = el("div", "panel");
+      p.id = "ledgerPanel";
+      const h = el("h2", null, "Hallucination ledger");
+      h.appendChild(el("span", "pill info", "Across runs · Reviewable"));
+      p.appendChild(h);
+      p.appendChild(el("p", "lede",
+        "The panel above contains only cases from this run,Reports are replaced on rerun; the ledger preserves cases across runs:"
+        + "Recurring cases update the existing record and occurrence count,A recurring resolved case returns to unresolved and is marked recurring——"
+        + "This indicates the previous fix was incomplete. Each case keeps the cited evidence [n] Corresponding source text,Expand to inspect the exact evidence used."));
+      const body = el("div");
+      body.id = "ledgerBody";
+      p.appendChild(body);
+      return p;      // List mounted in DOM Fill in afterward(renderLedger by id Find container)
+    }
+
+    async function renderLedger() {
+      const body = $("ledgerBody");
+      if (!body) return;
+      let d;
+      try {
+        const qs = new URLSearchParams({page: LEDGER.page, size: LEDGER.size});
+        if (LEDGER.status) qs.set("status", LEDGER.status);
+        d = await api("/api/rag-eval/faith-cases?" + qs.toString());
+      } catch (e) {
+        body.textContent = "";
+        body.appendChild(el("div", "faith-none", "Review cases are temporarily unavailable. Please try again later."));
+        return;
+      }
+      body.textContent = "";
+
+      body.appendChild(hallucBox(d.hallucination));
+
+      const bar = el("div", "ledger-bar");
+      const mk = (label, st, n) => {
+        const b = el("button", "tab" + (LEDGER.status === st ? " on" : ""),
+                     label + " (" + n + ")");
+        b.addEventListener("click", () => { LEDGER.status = st; LEDGER.page = 1; renderLedger(); });
+        return b;
+      };
+      const all = d.counts["unresolved"] + d.counts["resolved"] + d.counts["dismissed"];
+      bar.appendChild(mk("Unresolved", "unresolved", d.counts["unresolved"]));
+      bar.appendChild(mk("Resolved", "resolved", d.counts["resolved"]));
+      bar.appendChild(mk("No action needed", "dismissed", d.counts["dismissed"]));
+      bar.appendChild(mk("All", "", all));
+      body.appendChild(bar);
+      const list = el("div", "fcbody");
+      list.style.padding = "0";
+
+      if (!d.items.length) {
+        body.appendChild(el("div", "faith-none",
+          all ? "No cases with this status" :
+          "No cases to review yet. Run an evaluation to check for unsupported answers."));
+        return;
+      }
+      for (const c of d.items) list.appendChild(ledgerCase(c));
+      body.appendChild(list);
+
+      const pg = el("div", "pager");
+      const prev = el("button", null, "← Previous");
+      const next = el("button", null, "Next →");
+      prev.disabled = d.page <= 1;
+      next.disabled = d.page >= d.pages;
+      prev.addEventListener("click", () => { LEDGER.page--; renderLedger(); });
+      next.addEventListener("click", () => { LEDGER.page++; renderLedger(); });
+      pg.appendChild(prev);
+      pg.appendChild(el("span", null, "Page " + d.page + " / " + d.pages + " pages · total " + d.total + " items"));
+      pg.appendChild(next);
+      body.appendChild(pg);
+    }
+
+
+    function hallucBox(h) {
+      const wrap = el("div", "halluc");
+      const pct = (v) => (v === null || v === undefined ? "—" : (v * 100).toFixed(1));
+      const mk = (cls, label, val, unit, sub) => {
+        const c = el("div", "hcard" + (cls ? " " + cls : ""));
+        c.appendChild(el("div", "hl", label));
+        const v = el("div", "hv", val);
+        if (unit) v.appendChild(el("small", null, unit));
+        c.appendChild(v);
+        const s2 = el("div", "hs");
+        s2.innerHTML = sub;
+        c.appendChild(s2);
+        return c;
+      };
+      const split = (cases) =>
+        "Hallucination <b>" + cases + "</b> items + Should have refused <b>" + h.refusal_missed + "</b> items";
+      const lg = h.ledger || {};
+      wrap.appendChild(mk("main", "Confirmed hallucination rate this run(Confirmed after human review)", pct(h.confirmed_rate), "%",
+        "<b>" + h.confirmed + "</b> / " + (h.evaluated ?? "—") + " evaluated questions("
+        + split(h.cases_confirmed) + ")。Confirmed hallucinations count only cases marked resolved——Confirmed unsupported claim and fixed;"
+        + (h.pending
+            ? "Remaining this run <b>" + h.pending + "</b> not reviewed,This is a lower bound until all cases are reviewed."
+            : "All flagged cases reviewed,All cases in this run have been reviewed.")
+        + "Unsupported answers do not need hallucination confirmation,Answering an unsupported question means answering without evidence."));
+      wrap.appendChild(mk("", "Judge-flagged rate this run(Flagged cases,Treat as an observation, not a conclusion)", pct(h.judged_rate), "%",
+        "<b>" + h.judged + "</b> / " + (h.evaluated ?? "—") + " questions(" + split(h.cases_judged) + ")。"
+        + "Among flagged hallucinations, <b>" + h.dismissed + "</b> reviewed as overly strict(Mark no action needed)。"
+        + "Denominator = Answerable " + (h.graded ?? "—") + " questions + Out of scope " + (h.absent ?? "—") + " questions."
+        + "Cumulative cases <b>" + (lg.total ?? "—") + "</b> items(Unresolved " + (lg["unresolved"] ?? "—")
+        + " · Resolved " + (lg["resolved"] ?? "—") + " · No action needed " + (lg["dismissed"] ?? "—")
+        + "),A management view across runs,Do not divide this cumulative count by a single run’s question count."));
+      return wrap;
+    }
+
+    function ledgerCase(c) {
+      const box = el("div", "fcase");
+      const hd = el("div", "fh");
+      hd.appendChild(el("span", "fid", c.eval_id));
+      const grow = el("span", "grow");
+      grow.appendChild(el("span", "fq", c.query));
+      hd.appendChild(grow);
+      if (c.reopened) hd.appendChild(el("span", "st again", "Recurring"));
+      hd.appendChild(el("span", "st " + (ST_CLS[c.status] || "open"), CASE_STATUS_LABEL[c.status] || c.status));
+      box.appendChild(hd);
+
+      box.appendChild(el("div", "fmeta",
+        (BUCKETS.find((x) => x.key === c.bucket)?.label || c.bucket)
+        + " · " + (STRAT.find((x) => x.key === c.strategy)?.label || c.strategy)
+        + " · Judged " + c.seen_count + " calls · recent " + fmtTime(c.last_seen_at)
+        + (c.judge_model ? " · Judge " + c.judge_model : "")));
+
+      const r1 = el("div", "frow");
+      r1.appendChild(el("span", "k", "Judge reasoning"));
+      r1.appendChild(document.createTextNode(c.reason || "—"));
+      box.appendChild(r1);
+      if (c.resolution) {
+        const rr = el("div", "frow");
+        rr.appendChild(el("span", "k", c.status === "resolved" ? "How it was resolved" : "Why no change is needed"));
+        rr.appendChild(document.createTextNode(c.resolution));
+        box.appendChild(rr);
+      }
+      const r2 = el("div", "frow");
+      r2.appendChild(el("span", "k", "Generated answer(Original text)"));
+      r2.appendChild(el("div", "ans", c.answer || ""));
+      box.appendChild(r2);
+
+      const n = (c.citations || []).length;
+      const used = [...new Set((c.answer || "").match(/\[(\d+)\]/g) || [])]
+        .map((x) => parseInt(x.slice(1, -1), 10))
+        .filter((x) => x >= 1 && x <= n)
+        .sort((a, b) => a - b);
+      const cit = el("details", "cit");
+      cit.appendChild(el("summary", null, n
+        ? "Source evidence " + n + " items (all evidence supplied to the model this run)"
+          + (used.length ? " · The answer cites " + used.length + " items:"
+             + used.map((x) => "[" + x + "]").join("") : " · No citations in answer")
+        : "Source evidence —— No snapshot was recorded for this case"));
+      for (const x of (c.citations || [])) {
+        const isUsed = used.includes(x.n);
+        const line = el("div", "c1" + (isUsed ? " used" : ""));
+        const t = el("div");
+        t.appendChild(el("span", "cn" + (isUsed ? " on" : ""), "[" + x.n + "]"));
+        t.appendChild(document.createTextNode(" " + (x.question || "")));
+        if (isUsed) t.appendChild(el("span", "utag", "Answer citations"));
+        line.appendChild(t);
+        line.appendChild(el("div", "ctext", x.answer || ""));
+        line.appendChild(el("div", "cp",
+          (x.section_path || "") + (x.chunk_id ? "　·　chunk id " + x.chunk_id : "")));
+        cit.appendChild(line);
+      }
+      box.appendChild(cit);
+
+      const acts = el("div", "acts");
+      const noteBox = el("div", "noteform");     // Resolution explanation,Shown after selecting resolved or no action needed
+      noteBox.style.display = "none";
+
+      const post = async (st, note) => {
+        try {
+          await api("/api/rag-eval/faith-cases/" + c.id + "/status",
+                    {method: "POST", headers: {"Content-Type": "application/json"},
+                     body: JSON.stringify({status: st, resolution: note || null})});
+          toast(c.eval_id + " → " + st);
+          renderLedger();
+        } catch (e) { toast("Could not update status:" + e.message, true); renderLedger(); }
+      };
+
+      const openNote = (st) => {
+        noteBox.textContent = "";
+        noteBox.style.display = "flex";
+        const inp = el("input");
+        inp.type = "text";
+        inp.maxLength = 300;
+        inp.placeholder = st === "resolved"
+          ? "Describe the resolution, for example: corrected the policy passage and reindexed it."
+          : "Why no change is needed?For example:Processing time is not the same as bank posting time,Judge was too strict";
+        const ok = el("button", null, "Confirm mark as" + st + "」");
+        const cancel = el("button", "ghost", "Cancel");
+        const submit = () => {
+          const note = inp.value.trim();
+          if (!note) { toast("Enter a resolution explanation first", true); inp.focus(); return; }
+          ok.disabled = true;
+          post(st, note);
+        };
+        ok.addEventListener("click", submit);
+        inp.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(); });
+        cancel.addEventListener("click", () => { noteBox.style.display = "none"; });
+        noteBox.appendChild(inp);
+        noteBox.appendChild(ok);
+        noteBox.appendChild(cancel);
+        inp.focus();
+      };
+
+      const mkBtn = (label, st) => {
+        const b = el("button", null, label);
+        b.disabled = c.status === st;
+        b.addEventListener("click", () => {
+          if (st === "unresolved") { post(st, null); return; }   // No explanation needed to reopen(The explanation will also be cleared)
+          openNote(st);
+        });
+        return b;
+      };
+      acts.appendChild(mkBtn("Mark resolved", "resolved"));
+      acts.appendChild(mkBtn("No action needed", "dismissed"));
+      if (c.status !== "unresolved") acts.appendChild(mkBtn("Reopen", "unresolved"));
+      box.appendChild(acts);
+      box.appendChild(noteBox);
+      return box;
+    }
+
+    async function load() {
+      const box = $("body");
+      let d;
+      try {
+        d = await api("/api/rag-eval/overview");
+      } catch (e) {
+        box.textContent = "";
+        box.appendChild(missingBox("Could not load data: " + e.message));
+        return;
+      }
+      box.textContent = "";
+      if (!d.present) {
+        box.appendChild(missingBox(d.stale
+          ? "Your knowledge base or evaluation questions have changed. Run a new evaluation to see up-to-date results."
+          : "No evaluation results yet. Run an evaluation to compare retrieval quality."));
+        box.appendChild(jobPanel(d));
+        return;
+      }
+      box.appendChild(metaBar(d));
+      box.appendChild(kpiBox(d));
+      box.appendChild(retrievalPanel(d));
+      box.appendChild(generationPanel(d));
+      box.appendChild(tablePanel(d));
+      box.appendChild(ledgerPanel());
+      box.appendChild(jobPanel(d));
+      box.appendChild(notesPanel());
+      renderLedger();          // Panel already mounted,Available only afterward
+    }
+
+    mountAdminNav("/rag-eval");
+    $("refreshBtn").addEventListener("click", load);
+    load();
+  </script>
+</body>
+</html>

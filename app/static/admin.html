@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paw & Hearth · Admin</title>
+  <link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/static/paws.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/acceptance.css" />
+  <style>
+    .overview-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; margin-bottom: 26px; }
+    .overview-stat { padding: 16px; border: 2px solid var(--ink); background: var(--paper); box-shadow: 3px 3px 0 var(--ink); }
+    .overview-stat span { font-size: 12px; color: #74685f; }
+    .overview-stat b { display: block; margin-top: 8px; font-size: 28px; line-height: 1; }
+    .overview-stat.attention { background: #ffecd2; }
+    .overview-stat.error b { color: var(--error); }
+    .overview-stat.ok b { color: #31733d; }
+    .section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .section-head h2 { margin: 0; font-size: 16px; }
+    #lastUpdated { color: #74685f; font-size: 11px; }
+    .mods { display: grid; gap: 18px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .mod { min-width: 0; background: var(--paper); border: 3px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); padding: 18px; display: flex; flex-direction: column; }
+    .mod .head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .mod h3 { font-size: 16px; margin: 0; }
+    .mod .purpose { color: #74685f; font-size: 12px; line-height: 1.6; margin: 10px 0 0; }
+    .mod .headline { margin: 14px 0 0; padding: 10px; background: var(--cream); border-left: 3px solid var(--fur); font-size: 12px; line-height: 1.7; }
+    .mod.error .headline { border-left-color: var(--error); }
+    .mod .kpis { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-top: 18px; }
+    .mod .kpi { min-width: 0; font-size: 11px; color: #74685f; overflow-wrap: anywhere; }
+    .mod .kpi b { display: block; margin-bottom: 5px; color: var(--ink); font-size: 21px; line-height: 1.4; }
+    .mod .note { margin-top: 14px; font-size: 11px; color: #74685f; line-height: 1.7; overflow-wrap: anywhere; }
+    .mod .note summary { cursor: pointer; }
+    .mod .foot { margin-top: auto; padding-top: 18px; }
+    .pill.ok { background: #e3efdc; color: #31733d; }
+    .pill.attention { background: #ffecd2; }
+    .pill.error { background: #ffe1dc; color: #ae3549; }
+    #loadError { border: 2px solid var(--error); background: var(--paper); color: var(--error); padding: 12px; font-size: 12px; }
+    @media(max-width:600px) { .overview-stats { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; } .mods { grid-template-columns: minmax(0,1fr); } .mod { padding: 16px; } .section-head { flex-wrap: wrap; } }
+  </style>
+  <link id="mh-admin-css" rel="stylesheet" href="/static/admin.css" />
+<link rel="stylesheet" href="/static/pet-theme.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Overview</h1>
+      <span class="spacer"></span>
+      <button class="btn" id="refreshBtn">Refresh data</button>
+    </div>
+
+    <div class="overview-stats" aria-label="Module status">
+      <div class="overview-stat attention"><span>Needs attention</span><b id="count-attention">—</b></div>
+      <div class="overview-stat error"><span>Error</span><b id="count-error">—</b></div>
+      <div class="overview-stat ok"><span>Running normally</span><b id="count-ok">—</b></div>
+      <div class="overview-stat"><span>Not initialized</span><b id="count-missing">—</b></div>
+    </div>
+    <div class="section-head"><h2>Admin tools</h2><span class="spacer"></span><span id="lastUpdated" role="status"></span></div>
+    <p id="loadError" role="alert" hidden></p>
+    <div class="mods" id="mods"><div class="miss">Loading…</div></div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="/static/admin.js"></script>
+  <script src="/static/acceptance.js"></script>
+  <script>
+    const LABEL = { ok: "Normal", attention: "Needs attention", missing: "Not initialized", error: "Error" };
+    const COPY = {
+      kb: ["Knowledge base", "Add documents, sync the index, and test retrieval", "No knowledge yet. Add a document first."],
+      rageval: ["Retrieval evaluation", "Compare retrieval strategies and answer quality", "Run an evaluation to view results."],
+      review: ["Knowledge review", "Review unanswered questions and proposed answers", "Nothing awaiting review."],
+      observability: ["Observability & costs", "Explore model costs and quality trends", "Generate a report to view metrics."],
+      topics: ["Topics", "Browse questions by topic", "Classify questions to view their distribution."],
+      classifier: ["Classifier validation", "Review classification and dataset artifacts", "Complete validation checks to view results."],
+    };
+    function card(m) {
+      const copy = COPY[m.key] || [m.title, "", "No data yet."];
+      const box = el("article", "mod " + m.status);
+      const head = el("div", "head");
+      head.append(el("h3", null, copy[0]), el("span", "spacer"), el("span", "pill " + m.status, LABEL[m.status] || m.status));
+      box.append(head, el("p", "purpose", copy[1]));
+      if (m.metrics.length) {
+        const kpis = el("div", "kpis");
+        for (const k of m.metrics.slice(0, 3)) {
+          const kpi = el("div", "kpi");
+          kpi.append(el("b", null, k.value === null || k.value === undefined ? "—" : k.value), document.createTextNode(k.label));
+          kpis.append(kpi);
+        }
+        box.append(kpis);
+      }
+      if (m.status === "attention") {
+        const action = {kb:"Check source and search-index synchronization.",review:"Reviewed answers can be added to the knowledge base.",rageval:"Review below-target items, adjust, and evaluate again.",observability:"Inspect unusual metrics in the report.",topics:"Update classification results.",classifier:"Review failed validation checks."};
+        box.append(el("p", "headline", action[m.key] || m.headline));
+      }
+      if (m.status === "error") box.append(el("p", "headline", "Could not fetch data. Check service status."));
+      if (m.status === "missing") box.append(el("p", "headline", copy[2]));
+      if (m.note && ["error", "attention"].includes(m.status)) {
+        const details = el("details", "note"); details.append(el("summary", null, "Diagnostics"), el("p", null, m.note)); box.append(details);
+      }
+      const foot = el("div", "foot"), a = el("a", "btn", "Open →");
+      a.href = m.page; a.setAttribute("aria-label", "Open" + copy[0]); foot.append(a); box.append(foot);
+      return box;
+    }
+    async function load() {
+      const box = $("mods"), button = $("refreshBtn"); button.disabled = true; $("loadError").hidden = true;
+      try {
+        const d = await api("/api/admin/overview");
+        box.replaceChildren(...d.modules.map(card));
+        for (const state of Object.keys(LABEL)) $("count-" + state).textContent = d.modules.filter(m => m.status === state).length;
+        $("lastUpdated").textContent = "Updated " + new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+      } catch (e) {
+        $("loadError").textContent = "Could not load: " + e.message; $("loadError").hidden = false;
+        if (!box.querySelector("article")) box.replaceChildren(missingBox("Could not load admin tools. Please try again."));
+      } finally { button.disabled = false; }
+    }
+
+    mountAdminNav("/admin");
+    $("refreshBtn").addEventListener("click", load);
+    load();
+  </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+
+
+.env.*
+!.env.example
+.pytest_cache/
+data/*.db*
+data/*.sqlite*
+log/
+logs/
+*.pid
+data/roberta/*
+!data/roberta/reports
+!data/roberta/dataset
+# Reproducible synthetic English dataset inputs and documentation; weights stay ignored.
+!data/roberta/labels.json
+!data/roberta/README.md
+!data/roberta/ANNOTATION_GUIDE.md
+!data/roberta/DATASET_CARD.md
+!data/roberta/source/
+data/roberta/source/*
+!data/roberta/source/scenarios.jsonl
+!data/roberta/source/split_plan.json
+!data/roberta/source/generation_checkpoint.json
+!data/roberta/source/semantic_review.json
+data/runtime/
+
+
+data/*.log
+data/rag/*.log
+
+# Editable Python installation metadata
+*.egg-info/
+
+# Local platform metadata and private benchmark resume identities
+.DS_Store
+**/*.credentials.json
+
+# Exclude local demo recordings, drafts, and production assets.
+/artifacts/
+/docs/demo-walkthrough.zh-CN.md
+
+# Private machine configuration and credential material
+/.aws/
+/.codex/
+/.agents/
+*.pem
+*.key
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+
+# Local test result exports
+/test-results/
+
+# Evaluation runs and checkpoints are generated locally.
+/data/rag/reports/

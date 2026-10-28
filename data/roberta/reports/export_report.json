@@ -1,0 +1,9 @@
+{
+  "checked": 547,
+  "mismatch": 0,
+  "passed": true,
+  "parity_split": "val",
+  "onnx_bytes": 498862005,
+  "opset": 17,
+  "ran_at": "2026-10-22T15:08:47"
+}

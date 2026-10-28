@@ -104,7 +104,8 @@
         const card = el("div", "gcard " + blk.status);
         const head = el("div", "head");
         head.appendChild(el("div", "no", String(blk.no)));
-        head.appendChild(el("h3", "", blk.title));
+        const titles = {data: "Topic dataset", train: "Topic classifier"};
+        head.appendChild(el("h3", "", titles[blk.key] || blk.title));
         head.appendChild(el("span", "pill " + cls, label));
         head.appendChild(el("span", "spacer"));
         if (blk.page) {
@@ -113,8 +114,10 @@
           head.appendChild(a);
         }
         card.appendChild(head);
-        card.appendChild(el("div", "headline", blk.headline || "—"));
-        card.appendChild(el("div", "note", blk.note || ""));
+        const headlines = {golden: "No independently reviewed gold set yet", train: "Model weights, tokenizer, threshold and provenance"};
+        const notes = {classify: "Requires the enabled, verified classifier."};
+        card.appendChild(el("div", "headline", headlines[blk.key] || blk.headline || "—"));
+        card.appendChild(el("div", "note", notes[blk.key] || blk.note || ""));
         const specs = (blk.jobs || []).map((n) => jobSpecs[n]).filter(Boolean);
         if (specs.length) {
           const foot = el("div", "foot");

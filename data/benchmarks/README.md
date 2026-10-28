@@ -1,11 +1,11 @@
-# English Agent and retrieval evaluations
+# Agent and retrieval evaluations
 
 Current business cases use Paw & Hearth's U.S. policies and cat/dog catalog.
 
 ## Agent evaluation
 
 Run `make bench-agent` for a new experiment or `make bench-agent CONTINUE=1` to
-continue the latest one. The benchmark uses 12 English three-turn scenarios,
+continue the latest one. The benchmark uses 12 three-turn scenarios,
 repeated three times. The backend must expose the current resumable evaluation
 API; a read-only preflight checks this before accounts or experiments are created.
 
@@ -38,7 +38,7 @@ judgments are reused. RAG experiments live in `../rag/reports/runs/`.
 Only fully scored experiments enter the dashboard trend.
 
 `make bench-rag` runs a separate retrieval-only paired ablation on the current
-English annotations. It does not measure answer quality or unsupported-question
+annotations. It does not measure answer quality or unsupported-question
 refusals. Repeat count, dataset size, model names, and scores must come from its
 new report.
 

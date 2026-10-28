@@ -1,4 +1,4 @@
-# Paw & Hearth English topic dataset
+# Paw & Hearth topic dataset
 
 Release: `paw-topics-en-v1`. Status: **synthetic draft; independent review required**.
 
@@ -69,7 +69,7 @@ Usage includes returned provider counts from format-failed attempts as well as s
 - The release remains a draft pending independent semantic review and label checks. Do not claim audited leakage-free data, human-gold test accuracy, or production generalization.
 - Training selection, early stopping, thresholds, and prompt experiments use train/validation only. If test errors are used to add training cases, retire that test set as an independent final benchmark.
 - Use family-level resampling for confidence intervals. Multiple expressions from the same family are not independent trials.
-- The English training pipeline uses pinned FacebookAI/roberta-base weights, this release’s 17 English IDs, and validation-only epoch/threshold selection. ONNX parity checks use validation texts; held-out test examples are reserved for final evaluation. No production training or deployment has been run.
+- The training pipeline uses pinned FacebookAI/roberta-base weights, this release’s 17 topic IDs, and validation-only epoch/threshold selection. ONNX parity checks use validation texts; held-out test examples are reserved for final evaluation. No production training or deployment has been run.
 
 ## Review artifacts
 

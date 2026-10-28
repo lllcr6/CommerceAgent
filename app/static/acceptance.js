@@ -62,6 +62,8 @@ const JOB_LOGS = {};
 
 
 function jobButton(spec, logbox, onFinish) {
+  const titles = {"roberta-corpus": "Generate or resume the training corpus", "roberta-dataset": "Export and audit dataset partitions"};
+  spec = {...spec, title: titles[spec.name] || spec.title};
   const btn = el("button", "btn sm go", spec.actionLabel || "Run " + spec.title);
   btn.title = spec.disabledReason || spec.title;
   if (spec.danger) { btn.classList.remove("go"); btn.classList.add("danger"); }

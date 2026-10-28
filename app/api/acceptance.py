@@ -1,4 +1,4 @@
-"""Read English classifier dataset, model, metrics, and validation artifacts."""
+"""Read classifier dataset, model, metrics, and validation artifacts."""
 
 import json
 import pathlib
@@ -27,7 +27,7 @@ CLASSIFIER = "http://127.0.0.1:8110"
 
 
 LINEAGE = (
-    ("source/scenarios.jsonl", "Scenario families", "Authored English requests and topic boundaries", "roberta-corpus"),
+    ("source/scenarios.jsonl", "Scenario families", "Authored requests and topic boundaries", "roberta-corpus"),
     ("source/split_plan.json", "Assign partitions", "Keep each semantic family in one partition before generation", "roberta-dataset"),
     ("source/generation_checkpoint.json", "Generate variants", "Cached expressions inherit their family's fixed partition", "roberta-corpus"),
 )
@@ -138,13 +138,13 @@ async def overview() -> dict:
     classify = _load_report('classify_run.json', 'classify-pool')
     model_ok = all((MODEL / name).exists() for name in MODEL_TRIO)
     definitions = [
-        ('data', 'English dataset', '/acceptance/data', bool(ds['splits']['test']['size']), ds['clean'],
+        ('data', 'Topic dataset', '/acceptance/data', bool(ds['splits']['test']['size']), ds['clean'],
          ' / '.join(str(ds['splits'][k]['size']) for k in ('train','val','test')) + ' train / validation / test',
          'Synthetic draft: independent annotation review is still required.', []),
         ('golden', 'Independent annotation review', '/acceptance/data', False, False,
-         'No independently reviewed English gold set yet', 'Review the saved annotation sample before making accuracy claims.', []),
-        ('train', 'English model', '/acceptance/data', model_ok, model_ok,
-         'English weights, tokenizer, threshold and provenance', 'Training uses train and validation only.', ['roberta-train']),
+         'No independently reviewed gold set yet', 'Review the saved annotation sample before making accuracy claims.', []),
+        ('train', 'Topic classifier', '/acceptance/data', model_ok, model_ok,
+         'Model weights, tokenizer, threshold and provenance', 'Training uses train and validation only.', ['roberta-train']),
         ('export', 'ONNX export and service', None, export.get('present'), export.get('passed') and health['online'],
          f"{export.get('checked', 0)} validation examples checked; service {'online' if health['online'] else 'offline'}",
          'Export parity uses validation data; model and tokenizer metadata are verified at startup.', ['roberta-export','classifier-up','classifier-down']),
@@ -158,7 +158,7 @@ async def overview() -> dict:
         ('errors', 'Error review', '/acceptance/errors', evaluation.get('present'), True,
          f"{len(evaluation.get('errors', []))} examples to review", 'Check predictions and source annotations independently.', ['roberta-eval']),
         ('classify', 'Batch classification', '/topics', classify.get('present'), classify.get('status') != 'failed',
-         f"Last batch: {classify.get('written', 0)} records saved", 'Requires the enabled, verified English classifier.', ['classify-pool'])]
+         f"Last batch: {classify.get('written', 0)} records saved", 'Requires the enabled, verified classifier.', ['classify-pool'])]
     blocks = [dict(key=key, no=i+1, title=title, page=page,
                    status='missing' if not present else 'pass' if ok else 'fail',
                    headline=headline, note=note, jobs=targets)
@@ -243,7 +243,7 @@ class ClassifyIn(BaseModel):
 
 @router.post("/classify", dependencies=[Depends(require_topic_classifier)])
 async def classify(body: ClassifyIn) -> dict:
-    """Return one of nine English intent IDs and its confidence. Provider failures propagate to the API instead of becoming an other intent."""
+    """Classify a question using the configured topic model and return its scores."""
     text = body.text.strip()
     if not text:
         raise HTTPException(status_code=400, detail="Enter a question to classify.")
@@ -253,7 +253,7 @@ async def classify(body: ClassifyIn) -> dict:
             r.raise_for_status()
             payload = r.json()
             if payload.get('schema_version') != SCHEMA_VERSION:
-                raise ValueError('Classifier is not serving the English schema')
+                raise ValueError('Classifier is not serving the expected schema')
             result = payload['results'][0]
             labels = result['labels']
             if not labels or set(labels) - set(TOPIC_NAMES) or ('other' in labels and len(labels) > 1):
@@ -262,7 +262,7 @@ async def classify(body: ClassifyIn) -> dict:
     except Exception as e:
         raise HTTPException(
             status_code=502,
-            detail=f"Classifier service unavailable ({type(e).__name__}). Start the verified English export on port 8110.") from e
+            detail=f"Classifier service unavailable ({type(e).__name__}). Start the verified classifier export on port 8110.") from e
     threshold = _threshold_in_use()
     scores = sorted(result["scores"].items(), key=lambda x: -x[1])
     return {"text": text, "threshold": threshold, "labels": result["labels"],

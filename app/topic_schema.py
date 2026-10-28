@@ -19,7 +19,7 @@ SEVERITY = {name: ('strict' if i < 5 else 'standard' if i < 13 else 'flexible')
             for i, name in enumerate(TOPIC_NAMES)}
 
 
-PENDING = 'Topic classification is disabled. Verify the English model and ONNX export, start the classifier service, and enable TOPIC_CLASSIFIER_ENABLED.'
+PENDING = 'Topic classification is disabled. Verify the model and ONNX export, start the classifier service, and enable TOPIC_CLASSIFIER_ENABLED.'
 
 def require_topic_classifier():
     from fastapi import HTTPException

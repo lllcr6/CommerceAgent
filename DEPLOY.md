@@ -20,7 +20,7 @@ Configure three independent provider groups:
 | `RERANK_BASE_URL`, `RERANK_MODEL`, `RERANK_API_KEY` | Provider-specific reranking endpoint |
 | `INTENT_*`, `SUMMARY_*`, `JUDGE_*` | Optional per-purpose overrides; missing values inherit `CHAT_*` |
 | `DATABASE_URL`, `TEST_DATABASE_URL` | Separate application and disposable test databases |
-| `MILVUS_URI`, `MILVUS_COLLECTION` | Search service and active English collection |
+| `MILVUS_URI`, `MILVUS_COLLECTION` | Search service and active collection |
 
 The model must support tool calls. `CHAT_BASE_URL` is the compatible API root, not a provider's native endpoint. Reranking uses a separate request protocol. Provider adapters support the configured endpoint shapes; credentials and model access depend on your account. Set `MODEL_CONTEXT_WINDOW` when the local model lookup does not describe your deployment. Optional reasoning parameters should match the selected provider.
 
@@ -102,7 +102,7 @@ make roberta-export
 make classifier-up
 ```
 
-Training/export commands install the optional ML dependency group and may download model assets. Validate English schema/version, model, tokenizer, threshold, and ONNX parity before setting `TOPIC_CLASSIFIER_ENABLED=true`. The frozen synthetic dataset is not independently reviewed human gold. See [classifier documentation](data/roberta/README.md).
+Training/export commands install the optional ML dependency group and may download model assets. Validate the schema/version, model, tokenizer, threshold, and ONNX parity before setting `TOPIC_CLASSIFIER_ENABLED=true`. The frozen synthetic dataset is not independently reviewed human gold. See [classifier documentation](data/roberta/README.md).
 
 ## Troubleshooting
 

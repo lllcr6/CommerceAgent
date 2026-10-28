@@ -62,7 +62,7 @@ async def _rageval_card() -> dict:
         card["note"] = f"{type(e).__name__}: {e}"
         return card
     if not ov["present"]:
-        card["status"], card["headline"] = "missing", "No current English evaluation report. Open retrieval evaluation and run the benchmark."
+        card["status"], card["headline"] = "missing", "No current evaluation report. Open retrieval evaluation and run the benchmark."
         card["note"] = "Four strategies across question categories; requires an indexed corpus, Milvus, and a chat model. May take several minutes."
         return card
     best, gen = ov["best"], ov["generation"]

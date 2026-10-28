@@ -411,7 +411,7 @@
       const p = el("div", "panel");
       p.appendChild(el("h2", null, "Agent evaluation: response time and token usage"));
       const controls = () => {
-        p.appendChild(el("p", "lede", "Run 12 English support scenarios with three messages each, repeated three times. This creates test conversations and uses model API credits. Results update automatically when the run finishes. Rerun starts a new test. Continue reuses completed conversations and recovers pending requests. A conversation with a confirmed failed generation restarts separately to avoid mixing corrupted state."));
+        p.appendChild(el("p", "lede", "Run 12 support scenarios with three messages each, repeated three times. This creates test conversations and uses model API credits. Results update automatically when the run finishes. Rerun starts a new test. Continue reuses completed conversations and recovers pending requests. A conversation with a confirmed failed generation restarts separately to avoid mixing corrupted state."));
         const jobs = [job, continueJob].filter(Boolean), busy = jobs.some(j=>j.status==='running');
         p.appendChild(jobRow(jobs.map(j=>({...j,
           actionLabel:j.name==='bench-agent-continue'?'Continue agent evaluation':'Rerun agent evaluation',

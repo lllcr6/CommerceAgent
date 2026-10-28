@@ -105,7 +105,7 @@
       const ds = d.dataset, sp = ds.splits;
 
 
-      const pFlow = panel("English dataset: scenarios to frozen partitions",
+      const pFlow = panel("Topic dataset: scenarios to frozen partitions",
         "Families are assigned to train, validation or test before variants are generated. Each family stays in one partition.");
       const flow = el("div", "flow");
       d.lineage.forEach((s, i) => {
@@ -113,7 +113,7 @@
         const step = el("div", "step" + (s.present ? "" : " miss"));
         step.appendChild(el("div", "stage", s.stage));
         step.appendChild(el("b", "", s.present ? String(s.lines ?? "Saved") : "Missing"));
-        step.appendChild(el("div", "desc", s.desc));
+        step.appendChild(el("div", "desc", s.stage === "Scenario families" ? "Authored requests and topic boundaries" : s.desc));
         step.appendChild(el("div", "f", s.file));
         flow.appendChild(step);
       });

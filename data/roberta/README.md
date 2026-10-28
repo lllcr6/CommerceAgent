@@ -1,7 +1,7 @@
-# English topic dataset
+# Topic dataset
 
 Read [ANNOTATION_GUIDE.md](ANNOTATION_GUIDE.md) before using these files.
-[labels.json](labels.json) defines the 17 English topic IDs and boundaries.
+[labels.json](labels.json) defines the 17 topic IDs and boundaries.
 
 - `source/scenarios.jsonl`: authored scenario families and their two anchor expressions.
 - `source/split_plan.json`: deterministic family/group assignments selected before generation.
@@ -41,7 +41,7 @@ with a threshold selected on validation data. Its reported micro-F1 is 0.800 and
 macro-F1 is 0.767. Several per-topic targets are unmet; these measurements describe
 this synthetic split and do not establish production accuracy.
 
-## English classifier pipeline
+## Classifier pipeline
 
 The default encoder is `FacebookAI/roberta-base`, pinned to revision
 `e2da8e2f811d1448a5b465c236feacd80ffbac7b`. First training downloads its
@@ -69,14 +69,14 @@ if no label passes, the highest score is returned. Threshold ties prefer 0.5,
 then the closest threshold, then the lower one. Only validation drives selection.
 The export uses RoBERTa’s actual padding token/ID and its two named ONNX inputs.
 
-`model/model_manifest.json` binds the English label order, dataset release,
+`model/model_manifest.json` binds the label order, dataset release,
 encoder revision, training settings, decision policy and artifact hashes.
 The exported manifest additionally binds source-model identity, tokenizer padding
 and input names. Artifacts that do not match the manifest are refused. The runtime returns
-the English schema and model identity on `/healthz` and `/classify`; batch writes
+the schema and model identity on `/healthz` and `/classify`; batch writes
 validate that identity and all returned labels before saving anything.
 
-The classifier remains disabled in the main app until a verified English model
+The classifier remains disabled in the main app until a verified model
 is trained/exported and `TOPIC_CLASSIFIER_ENABLED=true` is deliberately configured.
 Dataset/report inspection remains available while classification is disabled.
 Do not tune against test errors: doing so retires that test set as an independent

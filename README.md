@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/lllcr6/CommerceAgent/actions/workflows/ci.yml/badge.svg)](https://github.com/lllcr6/CommerceAgent/actions/workflows/ci.yml)
 
-An English customer-support agent for e-commerce, demonstrated with Paw & Hearth, a fictional U.S. pet-supply retailer. It combines policy-grounded answers, authenticated order tools, confirmed support actions, human handoff, and an operations dashboard. The workflows can be adapted to other retailers by integrating their policies, catalog, and business systems.
+A customer-support agent for e-commerce, demonstrated with Paw & Hearth, a fictional U.S. pet-supply retailer. It combines policy-grounded answers, authenticated order tools, confirmed support actions, human handoff, and an operations dashboard. The workflows can be adapted to other retailers by integrating their policies, catalog, and business systems.
 
 [Watch the project demo](https://youtu.be/qCtvorLMRSI)
 
@@ -10,11 +10,11 @@ An English customer-support agent for e-commerce, demonstrated with Paw & Hearth
 
 ## Capabilities
 
-- **Grounded answers:** English policy and product documents, dense and BM25 retrieval, reciprocal-rank fusion, reranking, numbered citations, and an evidence-confidence gate.
+- **Grounded answers:** policy and product documents, dense and BM25 retrieval, reciprocal-rank fusion, reranking, numbered citations, and an evidence-confidence gate.
 - **Controlled actions:** a LangGraph workflow verifies order ownership and requests explicit confirmation before creating tickets or refund requests. Logistics and after-sales tools run through internal MCP services.
 - **Persistent conversations:** streamed responses continue when customers navigate away; stored generation snapshots restore output. Anchored history and append-only summaries manage context.
 - **Human support:** customers can request an agent or submit an independent ticket. Support specialists claim work, post public updates or internal notes, and update authorized orders with optimistic concurrency checks.
-- **Operations:** knowledge ingestion and review, resumable RAG and Agent evaluations, local token accounting, confidence calibration, and an English multi-label topic-classifier pipeline.
+- **Operations:** knowledge ingestion and review, resumable RAG and Agent evaluations, local token accounting, confidence calibration, and a multi-label topic-classifier pipeline.
 
 The storefront, orders, tracking events, and prices are simulated. The application does not execute payments, issue shipping labels, or connect to a production commerce platform.
 
@@ -67,7 +67,7 @@ Customers use `/`, support specialists use `/support`, and administrators use `/
 
 ## Evaluation
 
-Current inputs contain 121 English RAG questions and 12 English three-turn Agent scenarios. Reports identify the exact dataset, model configuration, run state, and sample count. Synthetic evaluation results describe these cases; they do not establish production resolution rates or staffing savings.
+Current inputs contain 121 RAG questions and 12 three-turn Agent scenarios. Reports identify the exact dataset, model configuration, run state, and sample count. Synthetic evaluation results describe these cases; they do not establish production resolution rates or staffing savings.
 
 ```bash
 make rag-check-offline                 # Validate local relevance annotations
@@ -76,12 +76,12 @@ make eval-rag                          # New four-strategy RAG evaluation
 make eval-rag CONTINUE=1               # Fill missing work in the latest run
 make bench-agent                       # Authenticated SSE benchmark, three repeats
 make bench-agent CONTINUE=1            # Continue the latest Agent run
-make roberta-audit                     # Validate frozen English topic partitions
+make roberta-audit                     # Validate frozen topic partitions
 ```
 
 Model-backed evaluations consume provider credits. Continuation reuses successful work only when its required configuration and input identities match. Failed calls remain missing rather than becoming zero scores. Private benchmark account credentials are excluded from public reports.
 
-The English topic dataset is synthetic and has its own [dataset card](data/roberta/DATASET_CARD.md). Train, evaluate, and export compatible English artifacts before enabling the optional classifier. Independently reviewed gold labels remain a separate validation requirement.
+The topic dataset is synthetic and has its own [dataset card](data/roberta/DATASET_CARD.md). Train, evaluate, and export compatible classifier artifacts before enabling the optional classifier. Independently reviewed gold labels remain a separate validation requirement.
 
 See [evaluation protocols](data/benchmarks/README.md) for metrics, limitations, and report locations.
 

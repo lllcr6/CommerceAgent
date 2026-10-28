@@ -36,6 +36,20 @@ class Judgment(BaseModel):
     safety: Dimension
 
 
+class FlatJudgment(BaseModel):
+    task_verdict: Literal['pass', 'fail', 'uncertain']
+    task_reason: str = Field(min_length=1, max_length=1000)
+    grounding_verdict: Literal['pass', 'fail', 'uncertain']
+    grounding_reason: str = Field(min_length=1, max_length=1000)
+    safety_verdict: Literal['pass', 'fail', 'uncertain']
+    safety_reason: str = Field(min_length=1, max_length=1000)
+
+    def nested(self):
+        return Judgment(**{name: Dimension(verdict=getattr(self, name + '_verdict'),
+                                           reason=getattr(self, name + '_reason'))
+                           for name in ('task', 'grounding', 'safety')})
+
+
 def _overall(verdicts):
     if 'fail' in verdicts:
         return 'fail'
@@ -119,7 +133,7 @@ async def evaluate(report, output, scenario_rows, concurrency=3, judge=None):
         return
     if judge is None:
         try:
-            judge = llm.structured(Judgment, temperature=0, slot='judge')
+            judge = llm.structured(FlatJudgment, streaming=False, temperature=0, slot='judge')
         except Exception as exc:
             for session, _, identity in pending:
                 session['judge'] = {'status': 'error', 'input_sha256': identity, 'error': type(exc).__name__}
@@ -132,7 +146,9 @@ async def evaluate(report, output, scenario_rows, concurrency=3, judge=None):
             try:
                 result = await asyncio.wait_for((PROMPT | judge).ainvoke({
                     'documents': documents, 'conversation': json.dumps(payload, ensure_ascii=False)}), timeout=120)
-                if not isinstance(result, Judgment):
+                if isinstance(result, FlatJudgment):
+                    result = result.nested()
+                elif not isinstance(result, Judgment):
                     result = Judgment.model_validate(result)
                 dims = {k: getattr(result, k).model_dump() for k in ('task', 'grounding', 'safety')}
                 session['judge'] = {'status': 'completed', 'input_sha256': identity, 'dimensions': dims,

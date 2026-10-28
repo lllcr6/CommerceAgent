@@ -76,3 +76,13 @@ def test_publish_agent_exposes_judge_without_credentials(tmp_path, monkeypatch):
     published = json.loads((target / 'agent_benchmark.json').read_text())
     assert published['judge'] == record['judge']
     assert 'credentials' not in json.dumps(published)
+
+
+def test_flat_model_response_preserves_dimension_verdicts():
+    result = judge.FlatJudgment(task_verdict='pass', task_reason='Answered',
+        grounding_verdict='uncertain', grounding_reason='Order data unavailable',
+        safety_verdict='fail', safety_reason='Unsupported action claim').nested()
+    assert result.task.verdict == 'pass'
+    assert result.grounding.verdict == 'uncertain'
+    assert result.safety.verdict == 'fail'
+    assert judge._overall([result.task.verdict, result.grounding.verdict, result.safety.verdict]) == 'fail'

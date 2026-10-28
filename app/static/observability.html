@@ -87,7 +87,7 @@
     @media(max-width:600px) {.price-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.price-result{grid-column:1/-1;padding:10px 0 0;border-left:0;border-top:1px solid #cbdcce;flex-direction:row;align-items:center;justify-content:space-between}.price-result strong{min-height:32px;font-size:24px}.price-editor{padding:14px}}
   </style>
   <link id="mh-admin-css" rel="stylesheet" href="/static/admin.css" />
-<link rel="stylesheet" href="/static/pet-theme.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
+<link rel="stylesheet" href="/static/pet-theme.css"><link rel="stylesheet" href="/static/agent-judge.css"><script src="/static/date-time.js"></script><script defer src="/static/english-ui.js"></script></head>
 <body>
   <div class="wrap">
     <div class="topbar">
@@ -104,6 +104,7 @@
   <script src="/static/admin.js"></script>
   <script src="/static/acceptance.js"></script>
   <script src="/static/usage-cost.js"></script>
+  <script src="/static/agent-judge.js"></script>
   <script>
 
     const NS = "http://www.w3.org/2000/svg";
@@ -451,37 +452,7 @@
         const tr = el("tr"); tr.appendChild(el("th", null, label)); tr.appendChild(el("td", "num", String(value))); table.appendChild(tr);
       }
       p.appendChild(table);
-      const judge = d.judge;
-      p.appendChild(el("h3", null, "Conversation quality · LLM judge"));
-      if (!judge) {
-        p.appendChild(el("p", "lede", "No judge results for this run. Run a new Agent evaluation to assess conversation quality."));
-      } else {
-        const rate = judge.pass_rate == null ? "Not available" : (judge.pass_rate * 100).toFixed(1) + "%";
-        p.appendChild(el("p", "lede", `Judge: ${judge.model || "Not recorded"} · Pass rate: ${rate} (${judge.pass} passed of ${judge.assessed} assessed) · ${judge.uncertain} uncertain · ${judge.failed_calls} judge calls failed · ${judge.judged} of ${judge.planned} planned conversations judged.`));
-        p.appendChild(el("p", "lede", judge.scope + " This is model-based evaluation, not a human-reviewed resolution rate. Continue retries failed judge calls. Judge calls use additional provider credits and are not included in the Agent token averages below."));
-        const details = document.createElement("details");
-        const heading = document.createElement("summary");
-        heading.textContent = "View individual judgments";
-        details.appendChild(heading);
-        for (const item of judge.cases || []) {
-          const block = document.createElement("details");
-          const title = document.createElement("summary");
-          title.textContent = `${item.scenario} · repeat ${Number(item.repeat) + 1} · ${item.overall || item.status}`;
-          block.appendChild(title);
-          if (item.error) block.appendChild(el("p", "lede", `Judge call failed: ${item.error}`));
-          for (const [name, result] of Object.entries(item.dimensions || {})) {
-            block.appendChild(el("p", "lede", `${name}: ${result.verdict} — ${result.reason}`));
-          }
-          for (const turn of item.turns || []) {
-            block.appendChild(el("p", "lede", `Turn ${turn.turn} · Customer: ${turn.prompt || ""}`));
-            block.appendChild(el("p", "lede", `Assistant: ${turn.answer || ""}`));
-            if ((turn.tools || []).length) block.appendChild(el("p", "lede", `Observed tool names: ${turn.tools.join(", ")}`));
-            if ((turn.actions || []).length) block.appendChild(el("p", "lede", `Proposed actions: ${JSON.stringify(turn.actions)}`));
-          }
-          details.appendChild(block);
-        }
-        p.appendChild(details);
-      }
+      p.appendChild(window.renderAgentJudge(d.judge));
       p.appendChild(el("p", "lede", "Input and output tokens are counted separately and summed across model calls in each completed three-turn conversation. Averages include only conversations with complete provider-reported usage from local records (or previously recorded Langfuse traces); estimates and missing usage are excluded."));
       if (!tokenSamples) p.appendChild(el("p", "lede", "No complete provider-reported usage records are available for completed three-turn conversations. Token averages are unavailable."));
       p.appendChild(window.agentCostEditor(a, d.meta?.model));
